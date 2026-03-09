@@ -6,21 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "onboard": "tsx scripts/onboard.ts",
+    "generate": "tsx scripts/generate-workspace.ts"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^8.9.0",
+    "chalk": "^4.1.2",
+    "inquirer": "^13.3.0",
+    "lucide-react": "^0.577.0",
+    "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.35"
+    "recharts": "^3.7.0",
+    "stripe": "^20.4.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/inquirer": "^9.0.9",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35"
+    "tsx": "^4.21.0",
+    "typescript": "^5"
   }
 }

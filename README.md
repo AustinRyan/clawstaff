@@ -68,7 +68,7 @@ Each agent lives in its own workspace directory with a `SOUL.md` (identity and p
 ## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/clawstaff.git
+git clone https://github.com/AustinRyan/clawstaff.git
 cd clawstaff
 npm run setup
 ```
@@ -117,7 +117,7 @@ If you prefer not to use the interactive `npm run setup`:
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/yourusername/clawstaff.git
+git clone https://github.com/AustinRyan/clawstaff.git
 cd clawstaff
 npm install
 

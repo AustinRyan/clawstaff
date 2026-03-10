@@ -392,7 +392,7 @@ export default function LandingPage() {
               Dashboard
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/AustinRyan/clawstaff"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-border text-text text-sm font-medium hover:bg-white/10 transition-colors"
@@ -442,7 +442,7 @@ export default function LandingPage() {
                   <ArrowRight size={16} />
                 </a>
                 <a
-                  href="https://github.com"
+                  href="https://github.com/AustinRyan/clawstaff"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 text-text border border-border hover:bg-white/10 transition-colors font-medium"
@@ -466,10 +466,10 @@ export default function LandingPage() {
                   <div className="px-4 py-3 font-mono text-sm">
                     <span className="text-text-muted">$</span>{" "}
                     <span className="text-text">
-                      git clone https://github.com/yourusername/clawstaff.git
+                      git clone https://github.com/AustinRyan/clawstaff.git
                     </span>
                   </div>
-                  <CopyButton text="git clone https://github.com/yourusername/clawstaff.git" />
+                  <CopyButton text="git clone https://github.com/AustinRyan/clawstaff.git" />
                 </div>
               </div>
 
@@ -696,7 +696,7 @@ export default function LandingPage() {
                     <p>
                       <span className="text-text-muted">$</span>{" "}
                       <span className="text-text">
-                        git clone https://github.com/yourusername/clawstaff.git
+                        git clone https://github.com/AustinRyan/clawstaff.git
                       </span>
                     </p>
                     <p>
@@ -706,7 +706,7 @@ export default function LandingPage() {
                       </span>
                     </p>
                   </div>
-                  <CopyButton text="git clone https://github.com/yourusername/clawstaff.git\ncd clawstaff && npm run setup" />
+                  <CopyButton text="git clone https://github.com/AustinRyan/clawstaff.git\ncd clawstaff && npm run setup" />
                 </div>
               </div>
             </Reveal>
@@ -1001,7 +1001,7 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-6 text-xs text-text-muted font-mono">
               <a
-                href="https://github.com"
+                href="https://github.com/AustinRyan/clawstaff"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-text transition-colors"
@@ -1015,7 +1015,7 @@ export default function LandingPage() {
                 Documentation
               </a>
               <a
-                href="https://github.com"
+                href="https://github.com/AustinRyan/clawstaff"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-text transition-colors"

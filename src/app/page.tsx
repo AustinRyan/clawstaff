@@ -324,31 +324,20 @@ const features = [
   },
 ];
 
-const architectureDiagram = `┌──────────────────────────────────────────────────┐
-│                   YOUR VPS (Ubuntu)               │
-│                                                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌───────────┐ │
-│  │ Agent: Maya  │  │ Agent: Cole  │  │ Agent: N  │ │
-│  │ (Restaurant) │  │ (Realtor)    │  │ (Fitness) │ │
-│  │              │  │              │  │           │ │
-│  │ SOUL.md      │  │ SOUL.md      │  │ SOUL.md   │ │
-│  │ USER.md      │  │ USER.md      │  │ USER.md   │ │
-│  │ HEARTBEAT.md │  │ HEARTBEAT.md │  │ HEARTBEAT │ │
-│  │ Skills/      │  │ Skills/      │  │ Skills/   │ │
-│  │ Memory/      │  │ Memory/      │  │ Memory/   │ │
-│  └──────┬───────┘  └──────┬───────┘  └─────┬─────┘ │
-│         │                  │                │       │
-│  ┌──────┴──────────────────┴────────────────┴─────┐ │
-│  │              OpenClaw Gateway                   │ │
-│  │         (Single process, multi-route)           │ │
-│  └──────────────────┬──────────────────────────────┘ │
-│                     │                                │
-└─────────────────────┼────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        │             │             │
-   WhatsApp       Slack        Telegram
-   (Client A)    (Client B)   (Client C)`;
+const agentNodes = [
+  { name: "Maya", vertical: "Restaurant", color: "#ef4444" },
+  { name: "Cole", vertical: "Realtor", color: "#3b82f6" },
+  { name: "Agent N", vertical: "Any Vertical", color: "#a78bfa" },
+];
+
+const agentFiles = ["SOUL.md", "USER.md", "HEARTBEAT.md", "Skills/", "Memory/"];
+
+const channels = [
+  { name: "WhatsApp", color: "#22c55e" },
+  { name: "Slack", color: "#a78bfa" },
+  { name: "Telegram", color: "#38bdf8" },
+  { name: "SMS", color: "#f87171" },
+];
 
 /* ─────────────────────────────────────────────
    Page
@@ -797,19 +786,82 @@ export default function LandingPage() {
           </Reveal>
 
           <Reveal>
-            <div className="bg-[#0d0d14] border border-border rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                <span className="text-[10px] font-mono text-text-muted ml-2">
-                  architecture
-                </span>
+            <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
+              {/* Server container */}
+              <div className="border border-border rounded-xl p-4 sm:p-6 bg-white/[0.01]">
+                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-5">
+                  Your Machine / VPS
+                </p>
+
+                {/* Agent cards row */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  {agentNodes.map((agent) => (
+                    <div
+                      key={agent.name}
+                      className="border border-border rounded-xl p-3 sm:p-4 bg-white/[0.02]"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <div
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
+                          style={{ backgroundColor: agent.color + "20", color: agent.color }}
+                        >
+                          {agent.name[0]}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-text">{agent.name}</p>
+                          <p className="text-[10px] font-mono text-text-muted">{agent.vertical}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        {agentFiles.map((file) => (
+                          <p key={file} className="text-[10px] font-mono text-text-muted/60">
+                            {file}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Connection lines */}
+                <div className="flex justify-center mb-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-8 h-px bg-border" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent/40" />
+                    <div className="w-8 h-px bg-border" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent/40" />
+                    <div className="w-8 h-px bg-border" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent/40" />
+                    <div className="w-8 h-px bg-border" />
+                  </div>
+                </div>
+
+                {/* Gateway */}
+                <div className="border border-accent/30 rounded-xl p-4 bg-accent/[0.03] text-center">
+                  <p className="text-sm font-semibold text-text">OpenClaw Gateway</p>
+                  <p className="text-[10px] font-mono text-text-muted mt-1">Single process, multi-route</p>
+                </div>
               </div>
-              <div className="p-6 overflow-x-auto">
-                <pre className="font-mono text-xs sm:text-sm text-text-muted leading-relaxed whitespace-pre">
-                  {architectureDiagram}
-                </pre>
+
+              {/* Connection line to channels */}
+              <div className="flex justify-center py-3">
+                <div className="w-px h-6 bg-border" />
+              </div>
+
+              {/* Channel badges */}
+              <div className="flex justify-center gap-2 flex-wrap">
+                {channels.map((ch) => (
+                  <span
+                    key={ch.name}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white/[0.02] text-xs font-mono text-text-muted"
+                  >
+                    <div
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: ch.color }}
+                    />
+                    {ch.name}
+                  </span>
+                ))}
               </div>
             </div>
           </Reveal>

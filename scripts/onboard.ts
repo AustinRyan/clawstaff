@@ -1,12 +1,13 @@
 #!/usr/bin/env npx tsx
 /**
- * ClawStaff Client Onboarding CLI
+ * ClawStaff Agent Creation CLI
  *
- * Interactive walkthrough that collects client info and generates
- * a complete OpenClaw workspace using generate-workspace.
+ * Interactive walkthrough that collects business info and generates
+ * a complete OpenClaw agent workspace using generate-workspace.
  *
  * Usage:
  *   npx tsx scripts/onboard.ts
+ *   npm run onboard
  */
 
 import inquirer from "inquirer";
@@ -34,17 +35,17 @@ const HIGHLIGHT = chalk.hex("#f7c948");
 function banner() {
   console.log();
   console.log(ACCENT.bold("  ┌─────────────────────────────────────────┐"));
-  console.log(ACCENT.bold("  │           ClawStaff Onboarding          │"));
-  console.log(ACCENT.bold("  │        AI Agent Staffing Agency         │"));
+  console.log(ACCENT.bold("  │        ClawStaff Agent Creator          │"));
+  console.log(ACCENT.bold("  │      AI Agent Staffing Framework        │"));
   console.log(ACCENT.bold("  └─────────────────────────────────────────┘"));
   console.log();
   console.log(
     MUTED(
-      "  This wizard collects your client's info and generates"
+      "  This wizard collects business info and generates"
     )
   );
   console.log(
-    MUTED("  a complete OpenClaw workspace in under 5 minutes.")
+    MUTED("  a complete OpenClaw agent workspace in under 5 minutes.")
   );
   console.log();
 }
@@ -549,10 +550,14 @@ async function main() {
   console.log();
   console.log(chalk.white.bold("  Next steps:"));
   console.log(`    1. Review SOUL.md and tweak any wording`);
-  console.log(`    2. Copy workspace to VPS:  ${MUTED(`scp -r ${outDir} user@vps:/agents/${agentName}/`)}`);
-  console.log(`    3. Configure openclaw.json with model & channel credentials`);
-  console.log(`    4. Start the agent:  ${MUTED(`cd /agents/${agentName} && openclaw start`)}`);
-  console.log(`    5. Verify heartbeat cycle is running`);
+  console.log(`    2. Copy workspace to your agent data path:`);
+  console.log(`       ${MUTED(`cp -r ${outDir} ~/clawstaff/agents/${agentName.toLowerCase()}/`)}`);
+  console.log(`    3. Register with OpenClaw:`);
+  console.log(`       ${MUTED(`openclaw agents add --name ${agentName.toLowerCase()} --path ~/clawstaff/agents/${agentName.toLowerCase()}/`)}`);
+  console.log(`    4. Test the agent:`);
+  console.log(`       ${MUTED(`openclaw agent --agent ${agentName.toLowerCase()} --message "Hello!"`)}`);
+  console.log(`    5. Open the dashboard:  ${MUTED(`npm run dev`)}`);
+  console.log(`       Visit http://localhost:3000`);
   console.log();
   console.log(
     MUTED(`  To regenerate:  npx tsx scripts/generate-workspace.ts ${outDir}/onboard-config.json`)

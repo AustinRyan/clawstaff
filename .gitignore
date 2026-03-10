@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -26,7 +24,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+.env.production
+.env.development
 
 # vercel
 .vercel
@@ -34,3 +35,33 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent data (user-specific, not part of repo)
+agents/
+~/clawstaff/
+
+# scout drafts (may contain business data)
+scout/drafts/
+
+# backups
+backups/
+
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Internal planning files (not for public repo)
+claude-full-prompts.md
+PHASE_8_GO_LIVE.md
+PROJECT_BRIEF.md
+docs/TODO-production-readiness.md
+docs/plans/
+docs/test-results/

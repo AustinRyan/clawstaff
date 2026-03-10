@@ -4,12 +4,12 @@
  *
  * Validates the full system locally before VPS deployment.
  * 7 test groups covering deployment, agent behavior, dashboard,
- * Moltbook, Scout, Stripe, and Skills.
+ * Moltbook, Scout, and Skills.
  *
  * Usage:
  *   npx tsx scripts/test-e2e.ts              # run all
  *   npx tsx scripts/test-e2e.ts --test 2     # run specific test
- *   npx tsx scripts/test-e2e.ts --skip 6     # skip stripe
+ *   npx tsx scripts/test-e2e.ts --skip 5     # skip scout
  *   npx tsx scripts/test-e2e.ts --skip 5 --skip 6
  *
  * Prerequisites:
@@ -17,7 +17,7 @@
  *   - All 6 test agents deployed
  *   - Next.js dev server on localhost:3000
  *   - MOLTBOOK_API_KEY in .env.local
- *   - (Optional) stripe listen for Test 6
+ *   - (Optional) Google Places API key for Test 5 (Scout)
  */
 
 import { execSync } from "node:child_process";
@@ -759,92 +759,7 @@ async function test5_scout(): Promise<TestGroupResult> {
   };
 }
 
-// ─────────────────────────────────────────────
-// TEST 6: Stripe
-// ─────────────────────────────────────────────
-
-async function test6_stripe(): Promise<TestGroupResult> {
-  const start = Date.now();
-  const steps: StepResult[] = [];
-
-  const stripeKey = ENV.STRIPE_SECRET_KEY || "";
-  const priceId = ENV.STRIPE_PRICE_STARTER || "";
-
-  if (!stripeKey || !priceId) {
-    steps.push({ name: "Stripe env vars configured", status: "FAIL", detail: "Missing STRIPE_SECRET_KEY or STRIPE_PRICE_STARTER" });
-    return { id: 6, name: "Stripe (test mode)", status: "FAIL", steps, durationMs: Date.now() - start, notes: "Missing env vars" };
-  }
-  steps.push({ name: "Stripe env vars configured", status: "PASS", detail: "Key and price ID present" });
-
-  // Step 1: Create checkout session
-  const checkoutRes = httpPost(`${DEV_SERVER}/api/stripe/create-checkout`, { priceId, email: "e2e-test@clawstaff.test" });
-  let checkoutData: Record<string, unknown> = {};
-  try { checkoutData = JSON.parse(checkoutRes.body); } catch { /* ignore */ }
-
-  const checkoutUrl = checkoutData.url as string | undefined;
-  if (checkoutUrl && checkoutUrl.includes("checkout.stripe.com")) {
-    steps.push({ name: "Checkout session created", status: "PASS", detail: "Valid Stripe Checkout URL returned" });
-  } else {
-    steps.push({ name: "Checkout session created", status: "FAIL", detail: `Response: ${checkoutRes.body.slice(0, 200)}` });
-  }
-
-  // Step 2: Check if Stripe CLI webhook listener is running
-  // We can test by triggering a webhook event
-  let webhookListenerRunning = false;
-  try {
-    execSync(`stripe trigger checkout.session.completed --api-key ${stripeKey} 2>&1`, {
-      timeout: 30000,
-      encoding: "utf-8",
-    });
-    webhookListenerRunning = true;
-    steps.push({ name: "Webhook event triggered", status: "PASS", detail: "checkout.session.completed sent via Stripe CLI" });
-  } catch (err: unknown) {
-    const e = err as { stderr?: string; stdout?: string };
-    const output = (e.stderr || e.stdout || "").toString();
-    if (output.includes("not listening") || output.includes("No webhook") || output.includes("connect")) {
-      steps.push({ name: "Webhook event triggered", status: "SKIP", detail: "Stripe CLI webhook listener not running. Start: stripe listen --forward-to localhost:3000/api/stripe/webhook" });
-    } else {
-      // Trigger might still have worked
-      webhookListenerRunning = true;
-      steps.push({ name: "Webhook event triggered", status: "PASS", detail: "Event sent (with warnings)" });
-    }
-  }
-
-  // Step 3: Check client record (if webhook ran)
-  if (webhookListenerRunning) {
-    await sleep(3000);
-    const clientsPath = path.join(HOME, "clawstaff", "clients.json");
-    if (fs.existsSync(clientsPath)) {
-      try {
-        const raw = fs.readFileSync(clientsPath, "utf-8");
-        const db = JSON.parse(raw);
-        const clients = Array.isArray(db.clients) ? db.clients : [];
-        steps.push({
-          name: "Client record created",
-          status: clients.length > 0 ? "PASS" : "PARTIAL",
-          detail: clients.length > 0 ? `${clients.length} client record(s) in clients.json` : "clients.json exists but empty",
-        });
-      } catch {
-        steps.push({ name: "Client record created", status: "PARTIAL", detail: "clients.json exists but failed to parse" });
-      }
-    } else {
-      steps.push({ name: "Client record created", status: "PARTIAL", detail: "clients.json not created — webhook may not have client handling" });
-    }
-  }
-
-  const anyFail = steps.some((s) => s.status === "FAIL");
-  const allPass = steps.every((s) => s.status === "PASS");
-  const hasSkip = steps.some((s) => s.status === "SKIP");
-
-  return {
-    id: 6,
-    name: "Stripe (test mode)",
-    status: hasSkip ? "SKIP" : anyFail ? "FAIL" : allPass ? "PASS" : "PARTIAL",
-    steps,
-    durationMs: Date.now() - start,
-    notes: hasSkip ? "Stripe CLI listener not running — skipped webhook tests" : allPass ? "Full Stripe flow verified" : "Partial Stripe flow",
-  };
-}
+// TEST 6: Removed (was Stripe billing — no longer part of open-source ClawStaff)
 
 // ─────────────────────────────────────────────
 // TEST 7: Skills & Tools
@@ -988,7 +903,7 @@ async function main() {
     { id: 3, name: "Dashboard Data Flow", fn: test3_dashboard },
     { id: 4, name: "Moltbook", fn: test4_moltbook },
     { id: 5, name: "Scout Discovery", fn: test5_scout },
-    { id: 6, name: "Stripe (test mode)", fn: test6_stripe },
+    // Test 6 removed (was Stripe billing)
     { id: 7, name: "Skills & Tools", fn: test7_skills },
   ];
 

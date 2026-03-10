@@ -14,8 +14,8 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClawStaff — AI Agent Staffing",
-  description: "Managed AI agent staffing service. Your business gets a dedicated AI employee that works 24/7.",
+  title: "ClawStaff — Open-Source AI Agent Framework",
+  description: "Deploy vertical-specific AI agents for local businesses. Built on OpenClaw. Restaurants, real estate, fitness, medical, home services, and e-commerce.",
 };
 
 export default function RootLayout({

@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Loader2,
+  Users,
+  Zap,
 } from "lucide-react";
 import {
   AreaChart,
@@ -26,6 +28,13 @@ import {
 import { useAgentStats } from "@/lib/agent-data/hooks";
 import { DemoBanner } from "@/components/demo-banner";
 import type { ActivityItem } from "@/lib/agent-data/types";
+import { isDemoMode } from "@/lib/demo-mode";
+
+// Demo imports
+import { MotionCard, MotionSection, CountUp, CountUpDecimal, LiveActivityFeed } from "@/components/demo";
+import { DEMO_OVERVIEW_STATS, DEMO_METRICS } from "@/components/demo/demo-data";
+
+const DEMO = isDemoMode();
 
 function formatResponseTime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -78,9 +87,12 @@ function CustomTooltip({
 }
 
 export default function OverviewPage() {
-  const { data, loading, error } = useAgentStats(60000); // 60s polling
+  const { data: realData, loading, error } = useAgentStats(DEMO ? 0 : 60000);
 
-  if (loading && !data) {
+  // Use demo data when DEMO_MODE is on, otherwise fall through to real data
+  const data = DEMO ? DEMO_OVERVIEW_STATS : realData;
+
+  if (!DEMO && loading && !data) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="text-accent animate-spin" />
@@ -88,7 +100,7 @@ export default function OverviewPage() {
     );
   }
 
-  if (error && !data) {
+  if (!DEMO && error && !data) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -117,99 +129,98 @@ export default function OverviewPage() {
 
   const tasksThisWeek = taskBreakdown.reduce((sum, t) => sum + t.value, 0);
 
-  const metrics = [
-    {
-      label: "Messages Today",
-      value: String(todayMessages),
-      icon: MessageSquare,
-    },
-    {
-      label: "Avg Response Time",
-      value: formatResponseTime(avgResponseTimeSec),
-      icon: Clock,
-    },
-    {
-      label: "Tasks Total",
-      value: String(tasksThisWeek),
-      icon: CheckCircle2,
-    },
-    {
-      label: "Total Messages",
-      value: String(totalMessages),
-      icon: MessageSquare,
-    },
-  ];
+  // In demo mode, show more impressive metrics
+  const metrics = DEMO
+    ? [
+        { label: "Messages This Month", value: DEMO_METRICS.messagesThisMonth, icon: MessageSquare, numericValue: 847 },
+        { label: "Avg Response Time", value: DEMO_METRICS.avgResponseTime, icon: Clock, numericValue: 1.2, isDecimal: true, suffix: "m" },
+        { label: "Uptime", value: `${DEMO_METRICS.uptime}%`, icon: Zap, numericValue: 99.7, isDecimal: true, suffix: "%" },
+        { label: "Active Agents", value: String(DEMO_METRICS.activeAgents), icon: Users, numericValue: 23 },
+      ]
+    : [
+        { label: "Messages Today", value: String(todayMessages), icon: MessageSquare, numericValue: todayMessages },
+        { label: "Avg Response Time", value: formatResponseTime(avgResponseTimeSec), icon: Clock, numericValue: 0 },
+        { label: "Tasks Total", value: String(tasksThisWeek), icon: CheckCircle2, numericValue: tasksThisWeek },
+        { label: "Total Messages", value: String(totalMessages), icon: MessageSquare, numericValue: totalMessages },
+      ];
 
   const isOnline = identity.status === "online";
 
+  // Wrapper: use motion card in demo mode, plain div otherwise
+  const Card = DEMO ? MotionCard : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+  const Section = DEMO ? MotionSection : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+
   return (
     <div className="space-y-6">
-      {isDemo && <DemoBanner />}
+      {!DEMO && isDemo && <DemoBanner />}
 
       {/* Agent Status Hero */}
-      <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6">
-        <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-secondary/5" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <div className="relative">
-              <div className="w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center">
-                <span className="text-2xl font-bold text-accent font-mono">
-                  {identity.agentName[0]?.toUpperCase() || "A"}
-                </span>
+      <Section index={0}>
+        <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-secondary/5" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <div className="relative">
+                <div className="w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-accent font-mono">
+                    {identity.agentName[0]?.toUpperCase() || "A"}
+                  </span>
+                </div>
+                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-card ${isOnline ? "bg-emerald-500" : "bg-red-500"}`}>
+                  {isOnline && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-40" />}
+                </div>
               </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-card ${isOnline ? "bg-emerald-500" : "bg-red-500"}`}>
-                {isOnline && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-40" />}
+              <div>
+                <h1 className="text-xl font-bold text-text">{identity.agentName}</h1>
+                <p className="text-sm text-text-muted">{identity.role}</p>
               </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-text">{identity.agentName}</h1>
-              <p className="text-sm text-text-muted">{identity.role}</p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-8">
-            <div className="text-right">
-              <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
-                Status
-              </p>
-              <div className="flex items-center gap-2 mt-1">
-                {isOnline ? (
-                  <Wifi size={14} className="text-emerald-400" />
-                ) : (
-                  <WifiOff size={14} className="text-red-400" />
-                )}
-                <span className={`text-sm font-mono ${isOnline ? "text-emerald-400" : "text-red-400"}`}>
-                  {identity.status === "online" ? "Online" : identity.status === "error" ? "Error" : "Offline"}
-                </span>
+            <div className="flex items-center gap-8">
+              <div className="text-right">
+                <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
+                  Status
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  {isOnline ? (
+                    <Wifi size={14} className="text-emerald-400" />
+                  ) : (
+                    <WifiOff size={14} className="text-red-400" />
+                  )}
+                  <span className={`text-sm font-mono ${isOnline ? "text-emerald-400" : "text-red-400"}`}>
+                    {identity.status === "online" ? "Online" : identity.status === "error" ? "Error" : "Offline"}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div className="text-right">
-              <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
-                Vertical
-              </p>
-              <p className="text-sm font-mono text-text mt-1 capitalize">
-                {identity.vertical.replace("-", " ")}
-              </p>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div className="text-right">
-              <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
-                Since
-              </p>
-              <p className="text-sm font-mono text-text mt-1">
-                {formatDate(identity.activeSince)}
-              </p>
+              <div className="w-px h-10 bg-border" />
+              <div className="text-right">
+                <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
+                  Vertical
+                </p>
+                <p className="text-sm font-mono text-text mt-1 capitalize">
+                  {identity.vertical.replace("-", " ")}
+                </p>
+              </div>
+              <div className="w-px h-10 bg-border" />
+              <div className="text-right">
+                <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
+                  Since
+                </p>
+                <p className="text-sm font-mono text-text mt-1">
+                  {formatDate(identity.activeSince)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4">
-        {metrics.map(({ label, value, icon: Icon }) => (
-          <div
+        {metrics.map(({ label, value, icon: Icon, numericValue, isDecimal, suffix }, i) => (
+          <Card
             key={label}
+            index={i + 1}
             className="group bg-card border border-border rounded-2xl p-5 transition-colors hover:border-accent/20"
           >
             <div className="flex items-center justify-between">
@@ -221,16 +232,24 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-3xl font-bold font-mono text-text mt-3">
-              {value}
+              {DEMO && numericValue ? (
+                isDecimal ? (
+                  <CountUpDecimal end={numericValue} suffix={suffix} decimals={1} delay={0.3 + i * 0.15} />
+                ) : (
+                  <CountUp end={numericValue} delay={0.3 + i * 0.15} />
+                )
+              ) : (
+                value
+              )}
             </p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Chart + Activity Feed */}
       <div className="grid grid-cols-3 gap-4">
         {/* Messages Chart */}
-        <div className="col-span-2 bg-card border border-border rounded-2xl p-6">
+        <Section index={5} className="col-span-2 bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-sm font-semibold text-text">
@@ -240,7 +259,7 @@ export default function OverviewPage() {
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold font-mono text-text">
-                {chartTotal}
+                {DEMO ? <CountUp end={chartTotal} delay={0.8} /> : chartTotal}
               </span>
             </div>
           </div>
@@ -260,49 +279,65 @@ export default function OverviewPage() {
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "#6b6b7b", fontSize: 11, fontFamily: "var(--font-space-mono)" }} dy={8} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b6b7b", fontSize: 11, fontFamily: "var(--font-space-mono)" }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#ff6b35", strokeOpacity: 0.2 }} />
-                <Area type="monotone" dataKey="messages" stroke="#ff6b35" strokeWidth={2} fill="url(#msgGradient)" dot={false} activeDot={{ r: 4, fill: "#ff6b35", stroke: "#12121e", strokeWidth: 2 }} />
+                <Area
+                  type="monotone"
+                  dataKey="messages"
+                  stroke="#ff6b35"
+                  strokeWidth={2}
+                  fill="url(#msgGradient)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#ff6b35", stroke: "#12121e", strokeWidth: 2 }}
+                  isAnimationActive={DEMO}
+                  animationDuration={2000}
+                  animationEasing="ease-out"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Section>
 
         {/* Activity Feed */}
-        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col">
+        <Section index={6} className="bg-card border border-border rounded-2xl p-6 flex flex-col">
           <h2 className="text-sm font-semibold text-text mb-4">
-            Recent Activity
+            {DEMO ? "Live Activity" : "Recent Activity"}
           </h2>
-          <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-            {recentActivity.length === 0 && (
-              <p className="text-xs text-text-muted py-4 text-center">No recent activity</p>
-            )}
-            {recentActivity.map((item, i) => {
-              const Icon = activityIcons[item.type] || Send;
-              const isAccent = item.type === "escalation";
-              return (
-                <div
-                  key={i}
-                  className="group flex items-start gap-3 p-2.5 rounded-lg hover:bg-white/[0.02] transition-colors"
-                >
+
+          {DEMO ? (
+            <LiveActivityFeed />
+          ) : (
+            <div className="flex-1 overflow-y-auto space-y-1 pr-1">
+              {recentActivity.length === 0 && (
+                <p className="text-xs text-text-muted py-4 text-center">No recent activity</p>
+              )}
+              {recentActivity.map((item, i) => {
+                const Icon = activityIcons[item.type] || Send;
+                const isAccent = item.type === "escalation";
+                return (
                   <div
-                    className={`mt-0.5 w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center ${
-                      isAccent ? "bg-accent/15 text-accent" : "bg-white/5 text-text-muted"
-                    }`}
+                    key={i}
+                    className="group flex items-start gap-3 p-2.5 rounded-lg hover:bg-white/[0.02] transition-colors"
                   >
-                    <Icon size={13} />
+                    <div
+                      className={`mt-0.5 w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center ${
+                        isAccent ? "bg-accent/15 text-accent" : "bg-white/5 text-text-muted"
+                      }`}
+                    >
+                      <Icon size={13} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-text leading-snug">
+                        {item.text}
+                      </p>
+                      <p className="text-[11px] font-mono text-text-muted mt-0.5">
+                        {timeAgo(item.time)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] text-text leading-snug">
-                      {item.text}
-                    </p>
-                    <p className="text-[11px] font-mono text-text-muted mt-0.5">
-                      {timeAgo(item.time)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </Section>
       </div>
     </div>
   );

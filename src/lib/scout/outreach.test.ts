@@ -368,16 +368,15 @@ describe("OutreachComposer — follow-ups", () => {
 describe("OutreachComposer — response replies", () => {
   const composer = new OutreachComposer();
 
-  it("composes interested reply mentioning Austin and a call", () => {
+  it("composes interested reply mentioning a call", () => {
     const reply = composer.composeResponse(makeDossier(), {
       response: { prospectId: "test-001", channel: "email", body: "Tell me more", receivedAt: new Date().toISOString() },
       category: "interested",
       confidence: 0.9,
       suggestedReply: null,
-      requiresAustinAlert: true,
+      requiresOperatorAlert: true,
     });
     assert.ok(reply);
-    assert.ok(reply!.body.includes("Austin"), "Should mention Austin");
     assert.ok(reply!.body.toLowerCase().includes("call"), "Should offer a call");
   });
 
@@ -387,7 +386,7 @@ describe("OutreachComposer — response replies", () => {
       category: "not_interested",
       confidence: 0.9,
       suggestedReply: null,
-      requiresAustinAlert: false,
+      requiresOperatorAlert: false,
     });
     assert.ok(reply);
     assert.ok(reply!.body.toLowerCase().includes("understood"), "Should acknowledge gracefully");
@@ -400,7 +399,7 @@ describe("OutreachComposer — response replies", () => {
       category: "pricing_question",
       confidence: 0.9,
       suggestedReply: null,
-      requiresAustinAlert: true,
+      requiresOperatorAlert: true,
     });
     assert.ok(reply);
     assert.ok(reply!.body.includes("$299") || reply!.body.includes("$499"), "Should include actual pricing");
@@ -412,7 +411,7 @@ describe("OutreachComposer — response replies", () => {
       category: "unsubscribe",
       confidence: 0.99,
       suggestedReply: null,
-      requiresAustinAlert: false,
+      requiresOperatorAlert: false,
     });
     assert.ok(reply);
     assert.ok(reply!.body.toLowerCase().includes("removed"), "Should confirm removal");
@@ -424,7 +423,7 @@ describe("OutreachComposer — response replies", () => {
       category: "out_of_office",
       confidence: 0.95,
       suggestedReply: null,
-      requiresAustinAlert: false,
+      requiresOperatorAlert: false,
     });
     assert.equal(reply, null, "Should not reply to out-of-office");
   });
@@ -435,11 +434,10 @@ describe("OutreachComposer — response replies", () => {
       category: "question",
       confidence: 0.6,
       suggestedReply: null,
-      requiresAustinAlert: true,
+      requiresOperatorAlert: true,
     });
     assert.ok(reply);
     assert.ok(reply!.body.toLowerCase().includes("call"), "Should offer a call");
-    assert.ok(reply!.body.includes("Austin"), "Should mention Austin");
   });
 });
 
@@ -525,24 +523,24 @@ describe("ResponseHandler — categorization", () => {
     assert.equal(result.category, "not_interested");
   });
 
-  it("interested responses require Austin alert", () => {
+  it("interested responses require operator alert", () => {
     const result = handler.categorize(makeResponse("I'd love to learn more"));
-    assert.ok(result.requiresAustinAlert, "Interested responses should alert Austin");
+    assert.ok(result.requiresOperatorAlert, "Interested responses should alert operator");
   });
 
-  it("pricing questions require Austin alert", () => {
+  it("pricing questions require operator alert", () => {
     const result = handler.categorize(makeResponse("What's the pricing?"));
-    assert.ok(result.requiresAustinAlert, "Pricing questions should alert Austin");
+    assert.ok(result.requiresOperatorAlert, "Pricing questions should alert operator");
   });
 
-  it("not interested does NOT require Austin alert", () => {
+  it("not interested does NOT require operator alert", () => {
     const result = handler.categorize(makeResponse("Not interested"));
-    assert.ok(!result.requiresAustinAlert);
+    assert.ok(!result.requiresOperatorAlert);
   });
 
-  it("unsubscribe does NOT require Austin alert", () => {
+  it("unsubscribe does NOT require operator alert", () => {
     const result = handler.categorize(makeResponse("unsubscribe"));
-    assert.ok(!result.requiresAustinAlert);
+    assert.ok(!result.requiresOperatorAlert);
   });
 });
 
@@ -962,7 +960,7 @@ describe("DailyOutreachReport", () => {
         category: "interested",
         confidence: 0.9,
         suggestedReply: null,
-        requiresAustinAlert: true,
+        requiresOperatorAlert: true,
       },
     ];
 
@@ -995,7 +993,7 @@ describe("DailyOutreachReport", () => {
         category: "pricing_question",
         confidence: 0.9,
         suggestedReply: null,
-        requiresAustinAlert: true,
+        requiresOperatorAlert: true,
       },
     ];
 
@@ -1090,7 +1088,7 @@ describe("End-to-end outreach flow", () => {
     // Verify
     assert.equal(result.categorized.category, "interested");
     assert.ok(result.reply);
-    assert.ok(result.reply!.body.includes("Austin"));
+    assert.ok(result.reply!.body.toLowerCase().includes("call"));
     assert.ok(result.alert);
     assert.equal(store.getById("e2e-001")?.state, "responded");
     assert.ok(whatsApp.alerts.length > 0);

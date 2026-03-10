@@ -12,6 +12,12 @@ import {
 } from "lucide-react";
 import { useAgentMessages, useAgentStats } from "@/lib/agent-data/hooks";
 import { DemoBanner } from "@/components/demo-banner";
+import { isDemoMode } from "@/lib/demo-mode";
+import { MotionSection, CountUp } from "@/components/demo";
+import { DEMO_CONVERSATIONS } from "@/components/demo/demo-data";
+import { motion } from "framer-motion";
+
+const DEMO = isDemoMode();
 
 const channelConfig: Record<string, { color: string; bg: string; borderColor: string }> = {
   Google: { color: "text-blue-400", bg: "bg-blue-500/10", borderColor: "border-blue-500/20" },
@@ -47,9 +53,12 @@ export default function MessagesPage() {
 
   const { data: statsData } = useAgentStats();
   const isDemo = statsData?.isDemo ?? false;
-  const agentName = statsData?.identity?.agentName ?? "Agent";
+  const agentName = DEMO ? "Maya" : (statsData?.identity?.agentName ?? "Agent");
 
-  const conversations = useMemo(() => msgData?.conversations ?? [], [msgData]);
+  const conversations = useMemo(() => {
+    if (DEMO) return DEMO_CONVERSATIONS;
+    return msgData?.conversations ?? [];
+  }, [msgData]);
 
   // Derive available channels from data
   const channels = useMemo(() => {
@@ -73,79 +82,87 @@ export default function MessagesPage() {
     return { total, inbound, outbound };
   }, [conversations]);
 
+  const Section = DEMO ? MotionSection : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+
   return (
     <div className="space-y-6">
-      {isDemo && <DemoBanner />}
+      {!DEMO && isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text">Messages</h1>
-          <p className="text-sm text-text-muted mt-1">
-            All agent conversations across every channel.
-          </p>
+      <Section index={0}>
+        <div className="flex items-end justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text">Messages</h1>
+            <p className="text-sm text-text-muted mt-1">
+              All agent conversations across every channel.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            {[
+              { label: "Total", value: stats.total },
+              { label: "Inbound", value: stats.inbound },
+              { label: "Outbound", value: stats.outbound },
+            ].map((s) => (
+              <div key={s.label} className="text-right">
+                <p className="text-[11px] font-mono text-text-muted uppercase tracking-wider">
+                  {s.label}
+                </p>
+                <p className="text-lg font-bold font-mono text-text">
+                  {DEMO ? <CountUp end={s.value} delay={0.3} /> : s.value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          {[
-            { label: "Total", value: stats.total },
-            { label: "Inbound", value: stats.inbound },
-            { label: "Outbound", value: stats.outbound },
-          ].map((s) => (
-            <div key={s.label} className="text-right">
-              <p className="text-[11px] font-mono text-text-muted uppercase tracking-wider">
-                {s.label}
-              </p>
-              <p className="text-lg font-bold font-mono text-text">{s.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      </Section>
 
       {/* Filters */}
-      <div className="bg-card border border-border rounded-2xl p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            {channels.map((ch) => {
-              const isActive = activeChannel === ch;
-              const cfg = ch !== "All" ? (channelConfig[ch] ?? defaultCfg) : null;
-              return (
-                <button
-                  key={ch}
-                  onClick={() => setActiveChannel(ch)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
-                    isActive
-                      ? ch === "All"
-                        ? "bg-accent/15 text-accent"
-                        : `${cfg!.bg} ${cfg!.color}`
-                      : "text-text-muted hover:text-text hover:bg-white/5"
-                  }`}
-                >
-                  {ch}
-                </button>
-              );
-            })}
-          </div>
+      <Section index={1}>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              {channels.map((ch) => {
+                const isActive = activeChannel === ch;
+                const cfg = ch !== "All" ? (channelConfig[ch] ?? defaultCfg) : null;
+                return (
+                  <button
+                    key={ch}
+                    onClick={() => setActiveChannel(ch)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
+                      isActive
+                        ? ch === "All"
+                          ? "bg-accent/15 text-accent"
+                          : `${cfg!.bg} ${cfg!.color}`
+                        : "text-text-muted hover:text-text hover:bg-white/5"
+                    }`}
+                  >
+                    {ch}
+                  </button>
+                );
+              })}
+            </div>
 
-          <div className="w-px h-6 bg-border" />
+            <div className="w-px h-6 bg-border" />
 
-          <div className="ml-auto relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search messages..."
-              className="bg-transparent border border-border rounded-lg pl-8 pr-3 py-1.5 text-sm text-text placeholder:text-text-muted/60 focus:outline-none focus:border-accent/40 transition-colors w-64"
-            />
+            <div className="ml-auto relative">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search messages..."
+                className="bg-transparent border border-border rounded-lg pl-8 pr-3 py-1.5 text-sm text-text placeholder:text-text-muted/60 focus:outline-none focus:border-accent/40 transition-colors w-64"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* Loading */}
-      {msgLoading && conversations.length === 0 && (
+      {!DEMO && msgLoading && conversations.length === 0 && (
         <div className="flex items-center justify-center py-12">
           <Loader2 size={24} className="text-accent animate-spin" />
         </div>
@@ -162,15 +179,14 @@ export default function MessagesPage() {
           </div>
         )}
 
-        {filtered.map((conv) => {
+        {filtered.map((conv, convIdx) => {
           const isExpanded = expandedId === conv.id;
           const cfg = channelConfig[conv.channel] ?? defaultCfg;
           const firstMsg = conv.messages[0];
           const isInbound = firstMsg?.role === "user";
 
-          return (
+          const convContent = (
             <div
-              key={conv.id}
               className={`bg-card border rounded-2xl transition-all ${
                 isExpanded ? "border-accent/20" : "border-border hover:border-border"
               }`}
@@ -273,6 +289,24 @@ export default function MessagesPage() {
               )}
             </div>
           );
+
+          if (DEMO) {
+            return (
+              <motion.div
+                key={conv.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: 0.3 + convIdx * 0.08,
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                }}
+              >
+                {convContent}
+              </motion.div>
+            );
+          }
+          return <div key={conv.id}>{convContent}</div>;
         })}
       </div>
     </div>

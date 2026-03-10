@@ -1,25 +1,27 @@
 {
-  "name": "clawstaff-temp",
-  "version": "0.1.0",
-  "private": true,
+  "name": "clawstaff",
+  "version": "1.0.0",
+  "private": false,
+  "license": "MIT",
+  "description": "Open-source AI agent staffing framework built on OpenClaw. Deploy vertical-specific AI agents for restaurants, real estate, fitness, medical, home services, and e-commerce.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "setup": "bash scripts/setup.sh",
     "onboard": "tsx scripts/onboard.ts",
     "generate": "tsx scripts/generate-workspace.ts"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^8.9.0",
     "chalk": "^4.1.2",
+    "framer-motion": "^12.35.1",
     "inquirer": "^13.3.0",
     "lucide-react": "^0.577.0",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
-    "recharts": "^3.7.0",
-    "stripe": "^20.4.0"
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.9",

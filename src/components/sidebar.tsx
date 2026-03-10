@@ -9,6 +9,7 @@ import {
   Globe,
   Bot,
   Settings,
+  Target,
 } from "lucide-react";
 import { useAgentStats } from "@/lib/agent-data/hooks";
 
@@ -17,6 +18,7 @@ const navItems = [
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/performance", label: "Performance", icon: BarChart3 },
   { href: "/dashboard/moltbook", label: "Moltbook", icon: Globe },
+  { href: "/dashboard/scout", label: "Scout", icon: Target },
   { href: "/dashboard/agent", label: "Agent", icon: Bot },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -35,7 +37,7 @@ export function Sidebar() {
           <span className="text-accent">Claw</span>
           <span className="text-text">Staff</span>
         </h1>
-        <p className="text-xs text-text-muted mt-1 font-mono">AI AGENT STAFFING</p>
+        <p className="text-xs text-text-muted mt-1 font-mono">AI AGENT FRAMEWORK</p>
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

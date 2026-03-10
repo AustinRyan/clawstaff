@@ -32,6 +32,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { isDemoMode } from "@/lib/demo-mode";
+import { MotionSection, CountUp } from "@/components/demo";
+
+const DEMO = isDemoMode();
 
 // ============================================================
 // Types
@@ -124,7 +128,7 @@ const stageConfig: Record<
   follow_up_3: { label: "Follow-up 3", bg: "bg-orange-500/15", text: "text-orange-300", order: 6 },
   responded: { label: "Responded", bg: "bg-emerald-500/10", text: "text-emerald-400", order: 7 },
   cold: { label: "Cold", bg: "bg-red-500/10", text: "text-red-400", order: 8 },
-  client: { label: "Client", bg: "bg-emerald-500/20", text: "text-emerald-300", order: 9 },
+  client: { label: "Converted", bg: "bg-emerald-500/20", text: "text-emerald-300", order: 9 },
 };
 
 const channelLabels: Record<OutreachChannel, { label: string; color: string; bg: string }> = {
@@ -546,7 +550,7 @@ const scoutMetrics = [
   { label: "Discovery Rate", value: "8.2", unit: "/day", icon: Target, change: "+14%", description: "Businesses found per day" },
   { label: "Qualification Rate", value: "36", unit: "%", icon: Filter, change: "+3%", description: "Score 60+ of discovered" },
   { label: "Response Rate", value: "27", unit: "%", icon: MessageCircle, change: "+5%", description: "Outreach that gets a reply" },
-  { label: "Conversion Rate", value: "1.9", unit: "%", icon: TrendingUp, change: "first!", description: "Outreach to client" },
+  { label: "Conversion Rate", value: "1.9", unit: "%", icon: TrendingUp, change: "first!", description: "Outreach to conversion" },
   { label: "Best Vertical", value: "Restaurant", unit: "", icon: Award, change: "68%", description: "Of total pipeline" },
   { label: "Best Angle", value: "Reviews", unit: "", icon: Star, change: "42%", description: "Response rate on review-focused msgs" },
   { label: "Cost Per Lead", value: "$2.40", unit: "", icon: DollarSign, change: "-12%", description: "API tokens per qualified prospect" },
@@ -673,12 +677,14 @@ export default function ScoutDashboardPage() {
     fontFamily: "var(--font-space-mono)",
   };
 
+  const Section = DEMO ? MotionSection : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+
   return (
     <div className="space-y-6">
       {/* ============================================================ */}
       {/* Admin Banner */}
       {/* ============================================================ */}
-      <div className="relative overflow-hidden bg-card border border-emerald-500/20 rounded-2xl p-6">
+      <Section index={0} className="relative overflow-hidden bg-card border border-emerald-500/20 rounded-2xl p-6">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5" />
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/3 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="relative flex items-center justify-between">
@@ -688,13 +694,13 @@ export default function ScoutDashboardPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-text tracking-tight">Scout</h1>
-              <p className="text-sm text-text-muted">Internal Prospecting Pipeline</p>
+              <p className="text-sm text-text-muted">Find businesses that need an AI agent</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
               <ShieldCheck size={14} className="text-emerald-400" />
-              <span className="text-[11px] font-mono text-emerald-400 uppercase tracking-wider">Admin Only</span>
+              <span className="text-[11px] font-mono text-emerald-400 uppercase tracking-wider">Draft Mode</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg">
               <Calendar size={14} className="text-text-muted" />
@@ -702,7 +708,7 @@ export default function ScoutDashboardPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* ============================================================ */}
       {/* Section 1: Pipeline Funnel + Trend Chart */}
@@ -735,7 +741,9 @@ export default function ScoutDashboardPage() {
                     <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">
                       {stage.label}
                     </p>
-                    <p className="text-2xl font-bold font-mono text-text">{stage.count}</p>
+                    <p className="text-2xl font-bold font-mono text-text">
+                      {DEMO ? <CountUp end={stage.count} delay={0.3 + i * 0.15} /> : stage.count}
+                    </p>
                   </div>
                   {!isLast && (
                     <div className="flex flex-col items-center px-1 shrink-0">
@@ -788,9 +796,9 @@ export default function ScoutDashboardPage() {
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={axisStyle} dy={8} interval={4} />
                 <YAxis axisLine={false} tickLine={false} tick={axisStyle} />
                 <Tooltip content={<ScoutTooltip />} cursor={{ stroke: ADMIN_ACCENT, strokeOpacity: 0.15 }} />
-                <Area type="monotone" dataKey="discovered" name="discovered" stroke={ADMIN_ACCENT_LIGHT} strokeWidth={1.5} fill="url(#discGrad)" dot={false} activeDot={{ r: 3, fill: ADMIN_ACCENT_LIGHT, stroke: "#12121e", strokeWidth: 2 }} />
-                <Area type="monotone" dataKey="outreach" name="outreach" stroke={ADMIN_ACCENT} strokeWidth={2} fill="url(#outGrad)" dot={false} activeDot={{ r: 3, fill: ADMIN_ACCENT, stroke: "#12121e", strokeWidth: 2 }} />
-                <Area type="monotone" dataKey="responses" name="responses" stroke="#5eead4" strokeWidth={2} fill="url(#respGrad)" dot={false} activeDot={{ r: 3, fill: "#5eead4", stroke: "#12121e", strokeWidth: 2 }} />
+                <Area type="monotone" dataKey="discovered" name="discovered" stroke={ADMIN_ACCENT_LIGHT} strokeWidth={1.5} fill="url(#discGrad)" dot={false} activeDot={{ r: 3, fill: ADMIN_ACCENT_LIGHT, stroke: "#12121e", strokeWidth: 2 }} isAnimationActive={DEMO} animationDuration={2000} />
+                <Area type="monotone" dataKey="outreach" name="outreach" stroke={ADMIN_ACCENT} strokeWidth={2} fill="url(#outGrad)" dot={false} activeDot={{ r: 3, fill: ADMIN_ACCENT, stroke: "#12121e", strokeWidth: 2 }} isAnimationActive={DEMO} animationDuration={2000} />
+                <Area type="monotone" dataKey="responses" name="responses" stroke="#5eead4" strokeWidth={2} fill="url(#respGrad)" dot={false} activeDot={{ r: 3, fill: "#5eead4", stroke: "#12121e", strokeWidth: 2 }} isAnimationActive={DEMO} animationDuration={2000} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -1102,8 +1110,8 @@ export default function ScoutDashboardPage() {
             {hotLeads.map((lead) => (
               <div
                 key={lead.id}
-                className="bg-card border border-emerald-500/20 rounded-2xl p-5 relative overflow-hidden"
-                style={{ boxShadow: "0 0 20px rgba(16, 185, 129, 0.06)" }}
+                className={`bg-card border border-emerald-500/20 rounded-2xl p-5 relative overflow-hidden ${DEMO ? "animate-pulse-glow" : ""}`}
+                style={{ boxShadow: DEMO ? "0 0 30px rgba(255, 107, 53, 0.08)" : "0 0 20px rgba(16, 185, 129, 0.06)" }}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
                 <div className="relative">

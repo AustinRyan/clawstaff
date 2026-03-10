@@ -1,22 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  MessageSquare,
-  Clock,
-  Star,
-  Users,
-  Calendar,
   BarChart3,
   Globe,
-  Zap,
-  Brain,
-  Shield,
   Check,
-  ChevronDown,
   Send,
+  Search,
+  Copy,
+  CheckCheck,
+  GitBranch,
+  Terminal,
+  Layers,
+  Award,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────
@@ -148,6 +146,31 @@ function ScoreRing({ score, size = 64 }: { score: number; size?: number }) {
 }
 
 /* ─────────────────────────────────────────────
+   Copy button for code blocks
+   ───────────────────────────────────────────── */
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="absolute top-3 right-3 p-1.5 rounded-md bg-white/5 hover:bg-white/10 transition-colors text-text-muted hover:text-text"
+      aria-label="Copy to clipboard"
+    >
+      {copied ? <CheckCheck size={14} /> : <Copy size={14} />}
+    </button>
+  );
+}
+
+/* ─────────────────────────────────────────────
    Data
    ───────────────────────────────────────────── */
 
@@ -160,12 +183,12 @@ const agents = [
     color: "#ef4444",
     chat: [
       {
-        type: "in" as const,
+        type: "out" as const,
         msg: "Hey Maya, we just got a 2-star review on Google about slow service last night",
         time: "9:02 AM",
       },
       {
-        type: "out" as const,
+        type: "in" as const,
         msg: "I saw it come in at 11:47pm and already responded. Apologized for the wait, mentioned the private event that impacted timing, and invited them back for a complimentary appetizer. Want me to send you the full response?",
         time: "9:02 AM",
       },
@@ -179,12 +202,12 @@ const agents = [
     color: "#3b82f6",
     chat: [
       {
-        type: "in" as const,
+        type: "out" as const,
         msg: "How many leads came in overnight?",
         time: "7:15 AM",
       },
       {
-        type: "out" as const,
+        type: "in" as const,
         msg: "3 new Zillow leads since midnight. Already responded to all within 4 minutes. Sarah K. wants to see the Oak St listing tomorrow at 2pm \u2014 I\u2019ve booked it on your calendar.",
         time: "7:15 AM",
       },
@@ -198,12 +221,12 @@ const agents = [
     color: "#22c55e",
     chat: [
       {
-        type: "in" as const,
+        type: "out" as const,
         msg: "How many inactive members did you reach out to this week?",
         time: "8:30 AM",
       },
       {
-        type: "out" as const,
+        type: "in" as const,
         msg: "Sent re-engagement messages to 23 members who haven\u2019t booked in 14+ days. 9 have already rebooked classes. Lisa M. asked about freezing her membership \u2014 flagged that for you.",
         time: "8:31 AM",
       },
@@ -217,12 +240,12 @@ const agents = [
     color: "#a78bfa",
     chat: [
       {
-        type: "in" as const,
+        type: "out" as const,
         msg: "What\u2019s the no-show situation this week?",
         time: "5:00 PM",
       },
       {
-        type: "out" as const,
+        type: "in" as const,
         msg: "4 no-shows this week, down from 11 last week. I followed up with all 4 within 30 minutes and 3 have rescheduled. That\u2019s a 72% recovery rate. Sending your weekly report now.",
         time: "5:01 PM",
       },
@@ -236,12 +259,12 @@ const agents = [
     color: "#f59e0b",
     chat: [
       {
-        type: "in" as const,
+        type: "out" as const,
         msg: "Any new leads today?",
         time: "12:15 PM",
       },
       {
-        type: "out" as const,
+        type: "in" as const,
         msg: "2 new estimate requests this morning. Both responded to within 8 minutes. Also followed up on 5 pending estimates from last week \u2014 Mrs. Chen confirmed the gutter job for Thursday.",
         time: "12:15 PM",
       },
@@ -255,12 +278,12 @@ const agents = [
     color: "#ec4899",
     chat: [
       {
-        type: "in" as const,
+        type: "out" as const,
         msg: "How\u2019s cart recovery looking?",
         time: "10:00 AM",
       },
       {
-        type: "out" as const,
+        type: "in" as const,
         msg: "Recovered 7 abandoned carts this week totaling $1,240 in revenue. Also collected 12 post-purchase reviews \u2014 average rating 4.8 stars. Support tickets are down 34% since I started handling tier-1.",
         time: "10:01 AM",
       },
@@ -268,93 +291,64 @@ const agents = [
   },
 ];
 
-const capabilities = [
+const features = [
   {
-    icon: Clock,
-    title: "24/7 Availability",
-    desc: "Never misses a message. Responds at 3am just as well as 3pm.",
-  },
-  {
-    icon: Zap,
-    title: "Instant Response",
-    desc: "Every lead, review, and inquiry gets a response in under 5 minutes.",
-  },
-  {
-    icon: Star,
-    title: "Review Management",
-    desc: "Monitors and responds to Google, Yelp, and Facebook reviews automatically.",
-  },
-  {
-    icon: Users,
-    title: "Lead Follow-Up",
-    desc: "Qualifies leads, books appointments, and follows up on a smart cadence.",
-  },
-  {
-    icon: Calendar,
-    title: "Appointment Scheduling",
-    desc: "Books directly on your calendar. Confirms, reminds, and reschedules.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Daily Summaries",
-    desc: "Morning briefing and nightly recap delivered straight to your phone.",
-  },
-  {
-    icon: Globe,
-    title: "Multi-Channel",
-    desc: "WhatsApp, Slack, SMS, email, Google Reviews \u2014 all through one agent.",
-  },
-  {
-    icon: Brain,
-    title: "Learns Over Time",
-    desc: "Memory system accumulates context about your business and customers.",
-  },
-  {
-    icon: Shield,
-    title: "Moltbook Reputation",
-    desc: "Public, verifiable track record on the AI agent social network.",
+    icon: Layers,
+    title: "6 Industry Verticals",
+    desc: "Restaurant, Real Estate, Fitness, Medical, Home Services, E-Commerce. Pre-built SOUL.md templates with industry-specific skills and behavioral rules.",
   },
   {
     icon: BarChart3,
-    title: "Network Knowledge",
-    desc: "Gains insights from 1.6M+ agents across industries on Moltbook.",
+    title: "Real-Time Dashboard",
+    desc: "Monitor agents, view conversations, track performance metrics. Live polling, vertical-aware task labels, and session history.",
+  },
+  {
+    icon: Award,
+    title: "Moltbook Reputation",
+    desc: "Agents build public, verifiable work profiles on the AI social network. 1.6M+ agents. Reputation scores that prove results.",
+  },
+  {
+    icon: Terminal,
+    title: "Template Engine",
+    desc: "80% vertical template + 20% client customization. Interactive onboarding CLI generates complete agent workspaces in minutes.",
+  },
+  {
+    icon: Search,
+    title: "Scout Prospecting",
+    desc: "Built-in prospecting agent finds businesses that need an AI agent. Discovery, qualification, personalized outreach, automated follow-up.",
+  },
+  {
+    icon: Globe,
+    title: "20+ Channels",
+    desc: "WhatsApp, Slack, Telegram, SMS, Discord, iMessage, and more. All through a single OpenClaw Gateway process.",
   },
 ];
 
-const faqs = [
-  {
-    q: "What exactly is an AI agent?",
-    a: "Think of it as a dedicated virtual team member that communicates via WhatsApp, Slack, or SMS. It handles tasks like responding to reviews, following up with leads, scheduling appointments, and sending you daily summaries. You interact with it just like you\u2019d text an employee.",
-  },
-  {
-    q: "Do I need to install any software?",
-    a: "No. Your agent is deployed and managed entirely by us on our infrastructure. You just get a WhatsApp number (or Slack channel, or both) and start texting. Zero setup on your end.",
-  },
-  {
-    q: "How is this different from a chatbot?",
-    a: "Chatbots follow rigid scripts. Our agents use advanced AI (Claude, GPT-4) with a memory system that learns about your business over time. They make contextual decisions, handle nuance, and get smarter every week. Plus, they build a public reputation on Moltbook that you can verify.",
-  },
-  {
-    q: "What is Moltbook?",
-    a: "Moltbook is a social network for AI agents with 1.6M+ members. Every ClawStaff agent has a public profile showing their real performance stats, industry contributions, and reputation score. It\u2019s like a LinkedIn for AI \u2014 verifiable proof your agent actually works.",
-  },
-  {
-    q: "Can I customize what my agent does?",
-    a: "Absolutely. During onboarding we configure your agent\u2019s personality, knowledge base, escalation rules, and communication style. You can add custom rules like \u201cnever offer discounts without my approval\u201d or \u201calways mention our Tuesday special.\u201d",
-  },
-  {
-    q: "What happens if the agent makes a mistake?",
-    a: "Agents follow strict behavioral rules defined in their identity file. Critical actions (refunds, pricing, complaints) are always escalated to you first. You\u2019re in control \u2014 the agent handles the volume, you make the calls.",
-  },
-  {
-    q: "How long does setup take?",
-    a: "Most agents are live within 24-48 hours of onboarding. We handle everything: identity configuration, skill installation, channel setup, and testing.",
-  },
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes. No contracts, no commitments. All plans are month-to-month. If you cancel, we archive your agent\u2019s memory so you can pick up where you left off if you return.",
-  },
-];
+const architectureDiagram = `┌──────────────────────────────────────────────────┐
+│                   YOUR VPS (Ubuntu)               │
+│                                                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────┐ │
+│  │ Agent: Maya  │  │ Agent: Cole  │  │ Agent: N  │ │
+│  │ (Restaurant) │  │ (Realtor)    │  │ (Fitness) │ │
+│  │              │  │              │  │           │ │
+│  │ SOUL.md      │  │ SOUL.md      │  │ SOUL.md   │ │
+│  │ USER.md      │  │ USER.md      │  │ USER.md   │ │
+│  │ HEARTBEAT.md │  │ HEARTBEAT.md │  │ HEARTBEAT │ │
+│  │ Skills/      │  │ Skills/      │  │ Skills/   │ │
+│  │ Memory/      │  │ Memory/      │  │ Memory/   │ │
+│  └──────┬───────┘  └──────┬───────┘  └─────┬─────┘ │
+│         │                  │                │       │
+│  ┌──────┴──────────────────┴────────────────┴─────┐ │
+│  │              OpenClaw Gateway                   │ │
+│  │         (Single process, multi-route)           │ │
+│  └──────────────────┬──────────────────────────────┘ │
+│                     │                                │
+└─────────────────────┼────────────────────────────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+   WhatsApp       Slack        Telegram
+   (Client A)    (Client B)   (Client C)`;
 
 /* ─────────────────────────────────────────────
    Page
@@ -374,10 +368,10 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-6">
             <a
-              href="#how-it-works"
+              href="#features"
               className="text-sm text-text-muted hover:text-text transition-colors hidden sm:block"
             >
-              How It Works
+              Features
             </a>
             <a
               href="#agents"
@@ -386,10 +380,10 @@ export default function LandingPage() {
               Agents
             </a>
             <a
-              href="#pricing-section"
+              href="#quickstart"
               className="text-sm text-text-muted hover:text-text transition-colors hidden sm:block"
             >
-              Pricing
+              Quick Start
             </a>
             <Link
               href="/dashboard"
@@ -397,12 +391,15 @@ export default function LandingPage() {
             >
               Dashboard
             </Link>
-            <Link
-              href="/pricing"
-              className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors"
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-border text-text text-sm font-medium hover:bg-white/10 transition-colors"
             >
-              Get Started
-            </Link>
+              <GitBranch size={14} />
+              GitHub
+            </a>
           </div>
         </div>
       </nav>
@@ -419,53 +416,71 @@ export default function LandingPage() {
             <div>
               <div className="animate-fade-up">
                 <p className="text-xs font-mono text-accent uppercase tracking-widest mb-4">
-                  AI Agent Staffing
+                  Open Source Framework
                 </p>
                 <h1 className="text-5xl lg:text-6xl font-bold text-text leading-[1.1] tracking-tight">
-                  Your new team member
+                  Deploy AI Agents
                   <br />
                   <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                    never sleeps.
+                    for Local Businesses
                   </span>
                 </h1>
               </div>
 
               <p className="animate-fade-up delay-200 text-lg text-text-muted mt-6 leading-relaxed max-w-lg">
-                Managed AI agents delivered via WhatsApp. No setup, no
-                software, no learning curve. Just text your agent and watch
-                it handle reviews, leads, scheduling, and customer follow-up
-                &mdash; 24/7.
+                Open-source framework built on OpenClaw. 6 vertical templates,
+                Moltbook reputation, real-time dashboard. Clone, configure,
+                deploy.
               </p>
 
               <div className="animate-fade-up delay-300 flex items-center gap-4 mt-8">
-                <Link
-                  href="/pricing"
+                <a
+                  href="#quickstart"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                 >
-                  See Pricing
+                  Get Started
                   <ArrowRight size={16} />
-                </Link>
+                </a>
                 <a
-                  href="#how-it-works"
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 text-text border border-border hover:bg-white/10 transition-colors font-medium"
                 >
-                  How It Works
-                  <ChevronDown size={16} />
+                  <GitBranch size={16} />
+                  View on GitHub
                 </a>
               </div>
 
-              <div className="animate-fade-up delay-400 flex items-center gap-6 mt-10 text-xs text-text-muted font-mono">
+              {/* Terminal clone block */}
+              <div className="animate-fade-up delay-400 mt-8 relative">
+                <div className="bg-[#0d0d14] border border-border rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+                    <span className="text-[10px] font-mono text-text-muted ml-2">
+                      terminal
+                    </span>
+                  </div>
+                  <div className="px-4 py-3 font-mono text-sm">
+                    <span className="text-text-muted">$</span>{" "}
+                    <span className="text-text">
+                      git clone https://github.com/yourusername/clawstaff.git
+                    </span>
+                  </div>
+                  <CopyButton text="git clone https://github.com/yourusername/clawstaff.git" />
+                </div>
+              </div>
+
+              <div className="animate-fade-up delay-500 flex items-center gap-6 mt-6 text-xs text-text-muted font-mono">
                 <span className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  14-day free trial
+                  MIT License
                 </span>
                 <span className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  No credit card required
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Cancel anytime
+                  Built on OpenClaw
                 </span>
               </div>
             </div>
@@ -475,12 +490,12 @@ export default function LandingPage() {
               <div className="bg-[#0b141a] rounded-2xl border border-[#1a2a2a] shadow-2xl shadow-accent/5 overflow-hidden max-w-[340px] mx-auto">
                 {/* WhatsApp header */}
                 <div className="bg-[#1f2c34] px-4 py-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center">
-                    <span className="text-sm font-bold text-accent">M</span>
+                  <div className="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <span className="text-sm font-bold text-blue-400">C</span>
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[#e9edef]">
-                      Maya
+                      Cole
                     </p>
                     <p className="text-[10px] text-[#8696a0]">
                       ClawStaff Agent &middot; online
@@ -491,23 +506,23 @@ export default function LandingPage() {
 
                 {/* Chat area */}
                 <div className="px-3 py-4 space-y-3 min-h-[320px] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMC41IiBmaWxsPSIjMWExYTJlMjAiLz48L3N2Zz4=')]">
-                  <ChatBubbleOutgoing
-                    message="Hey Maya, did we get any new reviews overnight?"
-                    time="8:01 AM"
-                  />
                   <ChatBubbleIncoming
-                    name="Maya"
-                    message="Good morning! Yes — 3 new Google reviews came in. Two 5-stars and one 3-star. I already responded to all three. Want me to send you the 3-star response to review?"
-                    time="8:01 AM"
+                    name="Cole"
+                    message="Heads up — a Zillow lead just came in at 2:47am asking about the Oak St listing. I responded in 3 minutes, qualified them, and booked a showing on your calendar for tomorrow at 2pm."
+                    time="6:30 AM"
                   />
                   <ChatBubbleOutgoing
-                    message="Yes please, and what did the 3-star say?"
-                    time="8:02 AM"
+                    message="Wait, you handled that while I was asleep?"
+                    time="7:14 AM"
                   />
                   <ChatBubbleIncoming
-                    name="Maya"
-                    message="They mentioned the wait was long on Saturday. I responded with an apology, explained we had an unusually busy night, and offered a priority reservation for their next visit. Here&apos;s the full response..."
-                    time="8:02 AM"
+                    name="Cole"
+                    message="That&apos;s the job. 3 leads came in overnight, all responded to under 5 minutes. I also pulled comps for the Elm St property — similar homes sold 8% above list in the last 30 days. Want the full report?"
+                    time="7:14 AM"
+                  />
+                  <ChatBubbleOutgoing
+                    message="Send it. This is insane."
+                    time="7:15 AM"
                   />
                 </div>
 
@@ -515,7 +530,7 @@ export default function LandingPage() {
                 <div className="bg-[#1f2c34] px-3 py-2.5 flex items-center gap-2">
                   <div className="flex-1 bg-[#2a3942] rounded-full px-4 py-2">
                     <p className="text-xs text-[#8696a0]">
-                      Message Maya...
+                      Message Cole...
                     </p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
@@ -528,62 +543,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How It Works ─────────────────────── */}
-      <section id="how-it-works" className="py-24 relative">
+      {/* ── Feature Grid ───────────────────────── */}
+      <section id="features" className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
         <div className="max-w-6xl mx-auto px-6">
           <Reveal className="text-center mb-16">
             <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
-              How It Works
+              Everything Included
             </p>
             <h2 className="text-3xl lg:text-4xl font-bold text-text">
-              Live in 48 hours. Seriously.
+              A complete framework, not a starter kit
             </h2>
+            <p className="text-text-muted mt-4 max-w-xl mx-auto text-sm leading-relaxed">
+              Templates, dashboard, reputation system, and prospecting tools
+              &mdash; everything you need to deploy and manage AI agents for
+              local businesses.
+            </p>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: "01",
-                title: "Tell us about your business",
-                desc: "5-minute onboarding call. We learn your business, customers, pain points, and communication style. That\u2019s it.",
-                gradient: "from-accent/10 to-transparent",
-              },
-              {
-                step: "02",
-                title: "We deploy your dedicated agent",
-                desc: "We build your agent\u2019s identity, install the right skill stack, connect your channels, and test everything. You don\u2019t touch a thing.",
-                gradient: "from-secondary/10 to-transparent",
-              },
-              {
-                step: "03",
-                title: "Start texting your new team member",
-                desc: "Open WhatsApp. Say hello. Your agent is already monitoring reviews, following up with leads, and sending you daily summaries.",
-                gradient: "from-emerald-500/10 to-transparent",
-              },
-            ].map((item, i) => (
-              <Reveal key={item.step}>
-                <div
-                  className={`bg-gradient-to-b ${item.gradient} border border-border rounded-2xl p-8 h-full`}
-                  style={{ transitionDelay: `${i * 150}ms` }}
-                >
-                  <span className="text-4xl font-bold font-mono bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                    {item.step}
-                  </span>
-                  <h3 className="text-lg font-bold text-text mt-4 mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-text-muted leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <Reveal key={feature.title}>
+                  <div
+                    className="bg-card border border-border rounded-2xl p-6 h-full group hover:border-accent/30 transition-all duration-300 hover:bg-card/80"
+                    style={{ transitionDelay: `${i * 80}ms` }}
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                      <Icon size={20} className="text-accent" />
+                    </div>
+                    <h3 className="font-bold text-text mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-text-muted leading-relaxed">
+                      {feature.desc}
+                    </p>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── Vertical Showcase ────────────────── */}
+      {/* ── Agent Showcase ────────────────────── */}
       <section id="agents" className="py-24">
         <div className="max-w-6xl mx-auto px-6">
           <Reveal className="text-center mb-16">
@@ -656,7 +660,195 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Moltbook Advantage ───────────────── */}
+      {/* ── Quick Start ────────────────────────── */}
+      <section id="quickstart" className="py-24 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-4xl mx-auto px-6">
+          <Reveal className="text-center mb-16">
+            <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
+              Quick Start
+            </p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-text">
+              Up and running in{" "}
+              <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                three steps
+              </span>
+            </h2>
+          </Reveal>
+
+          <div className="space-y-6">
+            {/* Step 1 */}
+            <Reveal>
+              <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+                  <span className="text-2xl font-bold font-mono bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                    01
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-text">Clone &amp; Setup</h3>
+                    <p className="text-xs text-text-muted">
+                      Clone the repo and install dependencies
+                    </p>
+                  </div>
+                </div>
+                <div className="relative bg-[#0d0d14] px-6 py-4 font-mono text-sm leading-relaxed">
+                  <div className="space-y-1">
+                    <p>
+                      <span className="text-text-muted">$</span>{" "}
+                      <span className="text-text">
+                        git clone https://github.com/yourusername/clawstaff.git
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-text-muted">$</span>{" "}
+                      <span className="text-text">
+                        cd clawstaff &amp;&amp; npm run setup
+                      </span>
+                    </p>
+                  </div>
+                  <CopyButton text="git clone https://github.com/yourusername/clawstaff.git\ncd clawstaff && npm run setup" />
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Step 2 */}
+            <Reveal>
+              <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+                  <span className="text-2xl font-bold font-mono bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                    02
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-text">
+                      Create Your First Agent
+                    </h3>
+                    <p className="text-xs text-text-muted">
+                      Interactive CLI walks you through vertical selection and
+                      customization
+                    </p>
+                  </div>
+                </div>
+                <div className="relative bg-[#0d0d14] px-6 py-4 font-mono text-sm leading-relaxed">
+                  <div className="space-y-1">
+                    <p>
+                      <span className="text-text-muted">$</span>{" "}
+                      <span className="text-text">npm run onboard</span>
+                    </p>
+                    <p>
+                      <span className="text-text-muted">
+                        # Follow the interactive CLI prompts
+                      </span>
+                    </p>
+                  </div>
+                  <CopyButton text="npm run onboard" />
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Step 3 */}
+            <Reveal>
+              <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+                  <span className="text-2xl font-bold font-mono bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                    03
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-text">Open the Dashboard</h3>
+                    <p className="text-xs text-text-muted">
+                      Monitor your agents, view conversations, track performance
+                    </p>
+                  </div>
+                </div>
+                <div className="relative bg-[#0d0d14] px-6 py-4 font-mono text-sm leading-relaxed">
+                  <div className="space-y-1">
+                    <p>
+                      <span className="text-text-muted">$</span>{" "}
+                      <span className="text-text">npm run dev</span>
+                    </p>
+                    <p>
+                      <span className="text-text-muted">
+                        # Visit http://localhost:3000
+                      </span>
+                    </p>
+                  </div>
+                  <CopyButton text="npm run dev" />
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Architecture ───────────────────────── */}
+      <section className="py-24">
+        <div className="max-w-5xl mx-auto px-6">
+          <Reveal className="text-center mb-12">
+            <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
+              Architecture
+            </p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-text">
+              Multi-tenant by design
+            </h2>
+            <p className="text-text-muted mt-4 max-w-xl mx-auto text-sm leading-relaxed">
+              Each agent gets an isolated workspace with its own identity,
+              memory, and skill stack. One Gateway process routes all channels
+              to the right agent.
+            </p>
+          </Reveal>
+
+          <Reveal>
+            <div className="bg-[#0d0d14] border border-border rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+                <span className="text-[10px] font-mono text-text-muted ml-2">
+                  architecture
+                </span>
+              </div>
+              <div className="p-6 overflow-x-auto">
+                <pre className="font-mono text-xs sm:text-sm text-text-muted leading-relaxed whitespace-pre">
+                  {architectureDiagram}
+                </pre>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Architecture highlights */}
+          <div className="grid sm:grid-cols-3 gap-4 mt-8">
+            {[
+              {
+                title: "Isolated Workspaces",
+                desc: "Each agent gets its own SOUL.md, memory, skills, and session history. No data bleed between clients.",
+              },
+              {
+                title: "Single Gateway",
+                desc: "One OpenClaw Gateway process handles all routing. WhatsApp, Slack, Telegram, and 20+ channels through one process.",
+              },
+              {
+                title: "File-Based Memory",
+                desc: "Markdown memory files on disk. Daily logs, long-term context, and session state. Simple, auditable, portable.",
+              },
+            ].map((item, i) => (
+              <Reveal key={item.title}>
+                <div
+                  className="bg-card border border-border rounded-xl p-5"
+                  style={{ transitionDelay: `${i * 100}ms` }}
+                >
+                  <h3 className="font-bold text-text text-sm mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-text-muted leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Moltbook Section ───────────────────── */}
       <section className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary/[0.02] to-transparent pointer-events-none" />
         <div className="max-w-6xl mx-auto px-6">
@@ -666,23 +858,22 @@ export default function LandingPage() {
                 The Moltbook Advantage
               </p>
               <h2 className="text-3xl lg:text-4xl font-bold text-text leading-tight">
-                Your agent builds a{" "}
+                Agents build{" "}
                 <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  public reputation
+                  public, verifiable
                 </span>{" "}
-                the world can verify.
+                work resumes.
               </h2>
               <p className="text-text-muted mt-6 leading-relaxed">
-                Moltbook is the social network for AI agents &mdash; 1.6M+ agents
-                posting insights, sharing knowledge, and building verifiable
-                track records. Every ClawStaff agent has a public profile
-                showing real performance data.
+                Moltbook is the social network for AI agents &mdash; 1.6M+
+                agents posting insights, sharing knowledge, and building
+                verifiable track records. Every ClawStaff agent gets a public
+                profile with real performance data.
               </p>
               <p className="text-text-muted mt-4 leading-relaxed">
-                This isn&apos;t another chatbot service. Your agent contributes
-                to industry communities, learns from other agents across
-                verticals, and accumulates a reputation score that proves it
-                actually delivers results.
+                No competitor can fake this. Reputation scores accumulate over
+                time based on real work, real interactions, and peer validation
+                from other agents across the platform.
               </p>
 
               <div className="mt-8 space-y-3">
@@ -794,303 +985,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Capabilities Grid ────────────────── */}
-      <section className="py-24">
+      {/* ── Footer ───────────────────────────── */}
+      <footer className="border-t border-border py-12">
         <div className="max-w-6xl mx-auto px-6">
-          <Reveal className="text-center mb-16">
-            <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
-              Capabilities
-            </p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-text">
-              What your agent can do
-            </h2>
-          </Reveal>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {capabilities.map((cap, i) => {
-              const Icon = cap.icon;
-              return (
-                <Reveal key={cap.title}>
-                  <div
-                    className="bg-card border border-border rounded-2xl p-5 h-full group hover:border-accent/30 transition-colors"
-                    style={{ transitionDelay: `${i * 50}ms` }}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                      <Icon size={18} className="text-accent" />
-                    </div>
-                    <h3 className="font-semibold text-text text-sm mb-2">
-                      {cap.title}
-                    </h3>
-                    <p className="text-xs text-text-muted leading-relaxed">
-                      {cap.desc}
-                    </p>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Social Proof ─────────────────────── */}
-      <section className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-6">
-          <Reveal className="text-center mb-16">
-            <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
-              Trusted
-            </p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-text">
-              Businesses are already texting their agents
-            </h2>
-          </Reveal>
-
-          {/* Stat bar */}
-          <Reveal>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-              {[
-                { value: "50+", label: "Businesses served" },
-                { value: "12,400+", label: "Messages handled" },
-                { value: "< 4 min", label: "Avg response time" },
-                { value: "1,200+", label: "Moltbook posts" },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-card border border-border rounded-2xl p-6 text-center"
-                >
-                  <p className="text-2xl lg:text-3xl font-bold font-mono bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                    {stat.value}
-                  </p>
-                  <p className="text-xs font-mono text-text-muted mt-2 uppercase tracking-wider">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-
-          {/* Testimonials */}
-          <div className="grid md:grid-cols-3 gap-5">
-            {[
-              {
-                quote:
-                  "I used to spend 45 minutes every night responding to reviews. Now Maya handles it all and my response rate went from 40% to 100%. Best $499 I spend every month.",
-                name: "Marco B.",
-                role: "Restaurant Owner, DC",
-              },
-              {
-                quote:
-                  "Cole followed up with a lead at 2am that turned into a $1.2M listing. I was asleep. My previous assistant never would have caught that.",
-                name: "Jennifer T.",
-                role: "Real Estate Agent, Miami",
-              },
-              {
-                quote:
-                  "No-shows dropped 35% in the first month. Sophia sends reminders, follows up with no-shows, and rebooks them before I even know they missed. Game changer.",
-                name: "Dr. Patel",
-                role: "Dental Practice, Austin",
-              },
-            ].map((t, i) => (
-              <Reveal key={t.name}>
-                <div
-                  className="bg-card border border-border rounded-2xl p-6 h-full flex flex-col"
-                  style={{ transitionDelay: `${i * 100}ms` }}
-                >
-                  <p className="text-sm text-text-muted leading-relaxed flex-1">
-                    &ldquo;{t.quote}&rdquo;
-                  </p>
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <p className="text-sm font-semibold text-text">{t.name}</p>
-                    <p className="text-xs font-mono text-text-muted">
-                      {t.role}
-                    </p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-
-          {/* Moltbook community stat */}
-          <Reveal>
-            <div className="mt-12 text-center bg-gradient-to-r from-accent/5 via-secondary/5 to-accent/5 border border-border rounded-2xl p-8">
-              <p className="text-sm text-text-muted">
-                Our agents have posted{" "}
-                <span className="font-bold font-mono text-accent">
-                  1,247 insights
-                </span>{" "}
-                across{" "}
-                <span className="font-bold font-mono text-secondary">
-                  18 industry communities
-                </span>{" "}
-                on Moltbook &mdash; building the largest verified AI agent
-                knowledge network in local business.
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-accent">Claw</span>
+                <span className="font-bold text-text">Staff</span>
+              </div>
+              <p className="text-xs text-text-muted font-mono mt-1">
+                Open Source AI Agent Framework
               </p>
             </div>
-          </Reveal>
-        </div>
-      </section>
 
-      {/* ── Pricing CTA ──────────────────────── */}
-      <section id="pricing-section" className="py-24">
-        <div className="max-w-3xl mx-auto px-6">
-          <Reveal className="text-center">
-            <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
-              Pricing
-            </p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-text">
-              Your AI employee, starting at{" "}
-              <span className="text-accent">$299/mo</span>
-            </h2>
-            <p className="text-text-muted mt-4 leading-relaxed max-w-lg mx-auto">
-              Three tiers, all month-to-month. 14-day free trial on every plan.
-              One-time setup fee covers onboarding and agent configuration.
-            </p>
-
-            {/* Quick tier overview */}
-            <div className="grid grid-cols-3 gap-4 mt-10 mb-10">
-              {[
-                {
-                  name: "Starter",
-                  price: "$299",
-                  desc: "1 agent, 1 channel",
-                },
-                {
-                  name: "Pro",
-                  price: "$499",
-                  desc: "1 agent, 3 channels",
-                  highlighted: true,
-                },
-                {
-                  name: "Enterprise",
-                  price: "$799",
-                  desc: "Multi-agent, all channels",
-                },
-              ].map((tier) => (
-                <div
-                  key={tier.name}
-                  className={`rounded-2xl p-5 ${
-                    tier.highlighted
-                      ? "bg-gradient-to-b from-accent/10 to-card border-2 border-accent/30"
-                      : "bg-card border border-border"
-                  }`}
-                >
-                  <p className="text-xs font-mono text-text-muted uppercase tracking-wider">
-                    {tier.name}
-                  </p>
-                  <p className="text-2xl font-bold font-mono text-text mt-1">
-                    {tier.price}
-                  </p>
-                  <p className="text-[11px] text-text-muted mt-0.5">
-                    {tier.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent text-white font-semibold text-lg hover:bg-accent-hover transition-colors"
-            >
-              View Full Pricing
-              <ArrowRight size={18} />
-            </Link>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── FAQ ──────────────────────────────── */}
-      <section className="py-24">
-        <div className="max-w-3xl mx-auto px-6">
-          <Reveal className="text-center mb-12">
-            <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">
-              FAQ
-            </p>
-            <h2 className="text-3xl font-bold text-text">
-              Questions? We&apos;ve got answers.
-            </h2>
-          </Reveal>
-
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <Reveal key={i}>
-                <details
-                  className="group bg-card border border-border rounded-xl overflow-hidden"
-                  style={{ transitionDelay: `${i * 50}ms` }}
-                >
-                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none">
-                    <span className="text-sm font-semibold text-text pr-4">
-                      {faq.q}
-                    </span>
-                    <ChevronDown
-                      size={16}
-                      className="text-text-muted flex-shrink-0 transition-transform group-open:rotate-180"
-                    />
-                  </summary>
-                  <div className="px-5 pb-4">
-                    <p className="text-sm text-text-muted leading-relaxed">
-                      {faq.a}
-                    </p>
-                  </div>
-                </details>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer CTA ───────────────────────── */}
-      <section className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-accent/[0.04] to-transparent pointer-events-none" />
-        <div className="max-w-3xl mx-auto px-6 text-center relative">
-          <Reveal>
-            <h2 className="text-3xl lg:text-4xl font-bold text-text">
-              Ready to hire your
-              <br />
-              <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                first AI employee?
-              </span>
-            </h2>
-            <p className="text-text-muted mt-4 max-w-md mx-auto">
-              14-day free trial. Live in 48 hours. No software to install.
-              Just text your agent and let it work.
-            </p>
-
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent text-white font-semibold text-lg hover:bg-accent-hover transition-colors"
+            <div className="flex items-center gap-6 text-xs text-text-muted font-mono">
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-text transition-colors"
               >
-                Get Started
-                <ArrowRight size={18} />
+                GitHub
+              </a>
+              <a
+                href="#quickstart"
+                className="hover:text-text transition-colors"
+              >
+                Documentation
+              </a>
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-text transition-colors"
+              >
+                Contributing
+              </a>
+              <Link
+                href="/dashboard"
+                className="hover:text-text transition-colors"
+              >
+                Dashboard
               </Link>
             </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────── */}
-      <footer className="border-t border-border py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-accent">Claw</span>
-            <span className="font-bold text-text">Staff</span>
-            <span className="text-xs text-text-muted font-mono ml-2">
-              AI Agent Staffing
-            </span>
           </div>
-          <div className="flex items-center gap-6 text-xs text-text-muted font-mono">
-            <Link href="/pricing" className="hover:text-text transition-colors">
-              Pricing
-            </Link>
-            <Link
-              href="/dashboard"
-              className="hover:text-text transition-colors"
-            >
-              Dashboard
-            </Link>
-            <a href="#how-it-works" className="hover:text-text transition-colors">
-              How It Works
-            </a>
+
+          <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-text-muted font-mono">
+              Built on{" "}
+              <span className="text-text">OpenClaw</span>
+              {" "}&middot;{" "}
+              MIT License
+            </p>
+            <p className="text-xs text-text-muted font-mono">
+              Moltbook reputation &middot; 20+ messaging channels &middot; 6 vertical templates
+            </p>
           </div>
         </div>
       </footer>

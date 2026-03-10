@@ -9,10 +9,7 @@ Before running the E2E test suite, ensure:
 3. **Next.js dev server running:** `npx next dev` on port 3000
 4. **Environment variables set** in `.env.local`:
    - `MOLTBOOK_API_KEY=moltbook_sk_...`
-   - `STRIPE_SECRET_KEY=sk_test_...`
-   - `STRIPE_PRICE_STARTER=price_...`
    - `AGENT_DATA_PATH=~/clawstaff/agents`
-5. **Stripe CLI** (optional, for Test 6): `stripe listen --forward-to localhost:3000/api/stripe/webhook`
 
 ## Quick Start
 
@@ -23,11 +20,8 @@ npx tsx scripts/test-e2e.ts
 # Run a specific test
 npx tsx scripts/test-e2e.ts --test 2
 
-# Skip a test (e.g. skip Stripe)
-npx tsx scripts/test-e2e.ts --skip 6
-
-# Skip multiple
-npx tsx scripts/test-e2e.ts --skip 5 --skip 6
+# Skip a test (e.g. skip Scout)
+npx tsx scripts/test-e2e.ts --skip 5
 ```
 
 ## Test Descriptions
@@ -98,19 +92,6 @@ Runs the Scout prospecting pipeline with mock data to verify the discovery → s
 
 **Pass criteria:** Pipeline completes, 10+ prospects, drafts on disk. Note: uses MockGoogleMapsScraper — no real API calls.
 
-### Test 6: Stripe (Test Mode)
-
-Validates the Stripe payment flow end-to-end.
-
-**Prerequisite:** `stripe listen --forward-to localhost:3000/api/stripe/webhook` must be running in a separate terminal.
-
-**What it checks:**
-- Checkout session creation returns a valid URL
-- Webhook listener receives events
-- `checkout.session.completed` webhook creates a client record
-
-**Pass criteria:** Checkout URL generated, webhook processed, client record in `~/clawstaff/clients.json`. SKIP if Stripe CLI not running.
-
 ## Reading Results
 
 Results are saved to `docs/test-results/YYYY-MM-DD.md` with:
@@ -129,8 +110,6 @@ Issues are tracked in `docs/known-issues.md`.
 **Gateway not responding** → `openclaw gateway restart`
 
 **Dev server not running** → Start with `npx next dev` in a separate terminal
-
-**Stripe webhook not received** → Ensure `stripe listen --forward-to localhost:3000/api/stripe/webhook` is running. Use `--api-key sk_test_...` if needed.
 
 **Moltbook auth failure** → Check `MOLTBOOK_API_KEY` in `.env.local`. Agent must be claimed (visit claim URL).
 

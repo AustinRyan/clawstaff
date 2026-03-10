@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import { useAgentStats } from "@/lib/agent-data/hooks";
 import { DemoBanner } from "@/components/demo-banner";
+import { isDemoMode } from "@/lib/demo-mode";
+import { MotionCard, MotionSection, CountUp } from "@/components/demo";
+import { DEMO_OVERVIEW_STATS } from "@/components/demo/demo-data";
+import { motion } from "framer-motion";
 import type { Vertical } from "@/lib/agent-data/types";
+
+const DEMO = isDemoMode();
 
 const verticalSkills: Record<Vertical, { label: string; color: string }[]> = {
   restaurant: [
@@ -94,9 +100,10 @@ function formatDate(iso: string): string {
 }
 
 export default function AgentPage() {
-  const { data, loading } = useAgentStats();
+  const { data: realData, loading } = useAgentStats();
+  const data = DEMO ? DEMO_OVERVIEW_STATS : realData;
 
-  if (loading && !data) {
+  if (!DEMO && loading && !data) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="text-accent animate-spin" />
@@ -113,119 +120,168 @@ export default function AgentPage() {
   const traits = styleTraits[styleKey] ?? styleTraits.professional;
 
   const stats = [
-    { label: "Messages Handled", value: totalMessages.toLocaleString(), icon: MessageSquare },
-    { label: "This Week", value: weekMessages.toLocaleString(), icon: MessageSquare },
-    { label: "Avg Response Time", value: formatResponseTime(avgResponseTimeSec), icon: Clock },
-    { label: "Status", value: isOnline ? "Online" : "Offline", icon: isOnline ? Wifi : WifiOff },
+    { label: "Messages Handled", value: totalMessages.toLocaleString(), icon: MessageSquare, numericValue: totalMessages },
+    { label: "This Week", value: weekMessages.toLocaleString(), icon: MessageSquare, numericValue: weekMessages },
+    { label: "Avg Response Time", value: formatResponseTime(avgResponseTimeSec), icon: Clock, numericValue: 0 },
+    { label: "Status", value: isOnline ? "Online" : "Offline", icon: isOnline ? Wifi : WifiOff, numericValue: 0 },
   ];
+
+  const Section = DEMO ? MotionSection : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+  const Card = DEMO ? MotionCard : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
 
   return (
     <div className="space-y-6">
-      {isDemo && <DemoBanner />}
+      {!DEMO && isDemo && <DemoBanner />}
 
-      <div>
-        <h1 className="text-2xl font-bold text-text">Agent Profile</h1>
-        <p className="text-sm text-text-muted mt-1">Your dedicated AI team member.</p>
-      </div>
+      <Section index={0}>
+        <div>
+          <h1 className="text-2xl font-bold text-text">Agent Profile</h1>
+          <p className="text-sm text-text-muted mt-1">Your dedicated AI team member.</p>
+        </div>
+      </Section>
 
       {/* Profile Hero */}
-      <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.04] via-transparent to-secondary/[0.04]" />
-        <div className="relative flex gap-8">
-          <div className="flex-shrink-0">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center shadow-lg shadow-accent/10">
-                <span className="text-4xl font-bold text-white font-mono">
-                  {identity.agentName[0]?.toUpperCase() || "A"}
+      <Section index={1}>
+        <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.04] via-transparent to-secondary/[0.04]" />
+          <div className="relative flex gap-8">
+            <div className="flex-shrink-0">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center shadow-lg shadow-accent/10">
+                  <span className="text-4xl font-bold text-white font-mono">
+                    {identity.agentName[0]?.toUpperCase() || "A"}
+                  </span>
+                </div>
+                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-[3px] border-card ${isOnline ? "bg-emerald-500" : "bg-red-500"}`}>
+                  {isOnline && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-40" />}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="text-2xl font-bold text-text">{identity.agentName}</h2>
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${isOnline ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
+                  {identity.status}
                 </span>
               </div>
-              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-[3px] border-card ${isOnline ? "bg-emerald-500" : "bg-red-500"}`}>
-                {isOnline && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-40" />}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-1">
-              <h2 className="text-2xl font-bold text-text">{identity.agentName}</h2>
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${isOnline ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
-                {identity.status}
-              </span>
-            </div>
-            <p className="text-sm text-accent font-medium">{identity.role}</p>
-            <p className="text-sm text-text-muted mt-3 leading-relaxed max-w-xl">
-              {identity.agentName} serves {identity.businessName || "your business"} as a{" "}
-              <span className="capitalize">{identity.vertical.replace("-", " ")}</span> agent.
-              Communication style: <span className="capitalize">{identity.communicationStyle}</span>.
-              {identity.ownerName && <> Reports to {identity.ownerName}.</>}
-            </p>
-            <div className="flex items-center gap-4 mt-4">
-              <div className="flex items-center gap-1.5 text-text-muted">
-                <Calendar size={13} />
-                <span className="text-xs font-mono">Active since {formatDate(identity.activeSince)}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-text-muted">
-                <Shield size={13} />
-                <span className="text-xs font-mono capitalize">{identity.vertical.replace("-", " ")}</span>
+              <p className="text-sm text-accent font-medium">{identity.role}</p>
+              <p className="text-sm text-text-muted mt-3 leading-relaxed max-w-xl">
+                {identity.agentName} serves {identity.businessName || "your business"} as a{" "}
+                <span className="capitalize">{identity.vertical.replace("-", " ")}</span> agent.
+                Communication style: <span className="capitalize">{identity.communicationStyle}</span>.
+                {identity.ownerName && <> Reports to {identity.ownerName}.</>}
+              </p>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-1.5 text-text-muted">
+                  <Calendar size={13} />
+                  <span className="text-xs font-mono">Active since {formatDate(identity.activeSince)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-text-muted">
+                  <Shield size={13} />
+                  <span className="text-xs font-mono capitalize">{identity.vertical.replace("-", " ")}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="group bg-card border border-border rounded-2xl p-5 transition-colors hover:border-accent/20">
+        {stats.map(({ label, value, icon: Icon, numericValue }, i) => (
+          <Card key={label} index={i + 2} className="group bg-card border border-border rounded-2xl p-5 transition-colors hover:border-accent/20">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-mono text-text-muted uppercase tracking-wider">{label}</p>
               <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center transition-colors group-hover:bg-accent/20">
                 <Icon size={15} className="text-accent" />
               </div>
             </div>
-            <p className="text-3xl font-bold font-mono text-text mt-3">{value}</p>
-          </div>
+            <p className="text-3xl font-bold font-mono text-text mt-3">
+              {DEMO && numericValue > 0 ? <CountUp end={numericValue} delay={0.4 + i * 0.15} /> : value}
+            </p>
+          </Card>
         ))}
       </div>
 
       {/* Skills + Personality */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-card border border-border rounded-2xl p-6">
+        <Section index={6} className="col-span-2 bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-5">
             <Sparkles size={16} className="text-accent" />
             <h2 className="text-sm font-semibold text-text">Skills</h2>
             <span className="text-xs text-text-muted capitalize">({identity.vertical.replace("-", " ")})</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {skills.map((skill) => (
-              <span
-                key={skill.label}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border"
-                style={{
-                  color: skill.color,
-                  backgroundColor: `${skill.color}10`,
-                  borderColor: `${skill.color}20`,
-                }}
-              >
-                {skill.label}
-              </span>
-            ))}
-          </div>
-        </div>
+            {skills.map((skill, i) => {
+              const badge = (
+                <span
+                  key={skill.label}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border"
+                  style={{
+                    color: skill.color,
+                    backgroundColor: `${skill.color}10`,
+                    borderColor: `${skill.color}20`,
+                  }}
+                >
+                  {skill.label}
+                </span>
+              );
 
-        <div className="bg-card border border-border rounded-2xl p-6">
+              if (DEMO) {
+                return (
+                  <motion.div
+                    key={skill.label}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      duration: 0.3,
+                      delay: 0.8 + i * 0.1,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
+                  >
+                    {badge}
+                  </motion.div>
+                );
+              }
+              return badge;
+            })}
+          </div>
+        </Section>
+
+        <Section index={7} className="bg-card border border-border rounded-2xl p-6">
           <h2 className="text-sm font-semibold text-text mb-4">Personality</h2>
           <div className="space-y-3">
-            {traits.map((trait) => (
-              <div key={trait.label} className="p-3 rounded-xl bg-white/[0.02]">
-                <p className="text-xs font-mono font-bold text-accent uppercase tracking-wider">
-                  {trait.label}
-                </p>
-                <p className="text-xs text-text-muted mt-1 leading-relaxed">{trait.desc}</p>
-              </div>
-            ))}
+            {traits.map((trait, i) => {
+              const traitContent = (
+                <div key={trait.label} className="p-3 rounded-xl bg-white/[0.02]">
+                  <p className="text-xs font-mono font-bold text-accent uppercase tracking-wider">
+                    {trait.label}
+                  </p>
+                  <p className="text-xs text-text-muted mt-1 leading-relaxed">{trait.desc}</p>
+                </div>
+              );
+
+              if (DEMO) {
+                return (
+                  <motion.div
+                    key={trait.label}
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      duration: 0.4,
+                      delay: 1.0 + i * 0.2,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
+                  >
+                    {traitContent}
+                  </motion.div>
+                );
+              }
+              return traitContent;
+            })}
           </div>
-        </div>
+        </Section>
       </div>
     </div>
   );

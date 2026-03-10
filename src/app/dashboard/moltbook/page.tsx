@@ -16,6 +16,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { DemoBanner } from "@/components/demo-banner";
+import { isDemoMode } from "@/lib/demo-mode";
+import { MotionCard, MotionSection, CountUp, AnimatedReputationRing } from "@/components/demo";
+import { DEMO_MOLTBOOK } from "@/components/demo/demo-data";
+import { motion } from "framer-motion";
+
+const DEMO = isDemoMode();
 
 // ─── Types ───────────────────────────────────
 
@@ -93,7 +99,7 @@ function timeAgo(iso: string): string {
   return `${weeks}w ago`;
 }
 
-// ─── SVG reputation ring ─────────────────────
+// ─── SVG reputation ring (non-demo) ─────────
 
 function ReputationRing({ score }: { score: number }) {
   const radius = 72;
@@ -128,14 +134,41 @@ function ReputationRing({ score }: { score: number }) {
   );
 }
 
+// ─── Animated upvote counter (demo only) ─────
+
+function AnimatedUpvotes({ base }: { base: number }) {
+  const [count, setCount] = useState(base);
+
+  useEffect(() => {
+    if (!DEMO) return;
+    const interval = setInterval(() => {
+      setCount((prev) => prev + 1);
+    }, 8000 + Math.random() * 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <motion.span
+      key={count}
+      initial={{ scale: 1 }}
+      animate={{ scale: [1, 1.3, 1] }}
+      transition={{ duration: 0.3 }}
+      className="text-xs font-mono"
+    >
+      {count}
+    </motion.span>
+  );
+}
+
 // ─── Page ────────────────────────────────────
 
 export default function MoltbookPage() {
   const [copied, setCopied] = useState(false);
-  const [data, setData] = useState<MoltbookData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<MoltbookData | null>(DEMO ? DEMO_MOLTBOOK : null);
+  const [loading, setLoading] = useState(!DEMO);
 
   useEffect(() => {
+    if (DEMO) return;
     fetch("/api/moltbook")
       .then((r) => r.json())
       .then((d) => setData(d))
@@ -167,10 +200,10 @@ export default function MoltbookPage() {
   ];
 
   const engagementStats = [
-    { label: "Total Posts", value: String(stats.totalPosts), icon: FileText },
-    { label: "Upvotes Received", value: String(stats.totalUpvotes), icon: ThumbsUp },
-    { label: "Agent Comments", value: String(stats.totalComments), icon: MessageCircle },
-    { label: "Active Submolts", value: String(stats.activeSubmolts), icon: Hash },
+    { label: "Total Posts", value: stats.totalPosts, icon: FileText },
+    { label: "Upvotes Received", value: stats.totalUpvotes, icon: ThumbsUp },
+    { label: "Agent Comments", value: stats.totalComments, icon: MessageCircle },
+    { label: "Active Submolts", value: stats.activeSubmolts, icon: Hash },
   ];
 
   const handleCopy = () => {
@@ -179,83 +212,112 @@ export default function MoltbookPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const Section = DEMO ? MotionSection : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+  const Card = DEMO ? MotionCard : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+
   return (
     <div className="space-y-6">
-      {isDemo && <DemoBanner />}
+      {!DEMO && isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-text">Moltbook</h1>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${
-            isDemo ? "bg-yellow-500/10 text-yellow-400" : "bg-accent/10 text-accent"
-          }`}>
-            {isDemo ? "Demo" : "Live"}
-          </span>
+      <Section index={0}>
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-text">Moltbook</h1>
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider ${
+              !DEMO && isDemo ? "bg-yellow-500/10 text-yellow-400" : "bg-accent/10 text-accent"
+            }`}>
+              {!DEMO && isDemo ? "Demo" : "Live"}
+            </span>
+          </div>
+          <p className="text-sm text-text-muted mt-1">
+            Your agent&apos;s public reputation on the AI social network — 1.6M+ agents.
+          </p>
         </div>
-        <p className="text-sm text-text-muted mt-1">
-          Your agent&apos;s public reputation on the AI social network — 1.6M+ agents.
-        </p>
-      </div>
+      </Section>
 
       {/* Reputation Score Card */}
-      <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.03] via-transparent to-secondary/[0.03]" />
-        <div className="relative flex items-center gap-10">
-          <ReputationRing score={reputation.overall} />
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="text-lg font-semibold text-text">Reputation Score</h2>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10">
-                <TrendingUp size={12} className="text-emerald-400" />
-                <span className="text-xs font-mono text-emerald-400">Active</span>
+      <Section index={1}>
+        <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.03] via-transparent to-secondary/[0.03]" />
+          <div className="relative flex items-center gap-10">
+            {DEMO ? (
+              <AnimatedReputationRing score={reputation.overall} />
+            ) : (
+              <ReputationRing score={reputation.overall} />
+            )}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold text-text">Reputation Score</h2>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10">
+                  <TrendingUp size={12} className="text-emerald-400" />
+                  <span className="text-xs font-mono text-emerald-400">Active</span>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {repBreakdown.map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-text-muted">{item.label}</span>
-                      <span className="text-xs font-mono font-bold text-text">{item.value}</span>
-                    </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-1000"
-                        style={{ width: `${item.value}%`, backgroundColor: item.color }}
-                      />
+              <div className="grid grid-cols-2 gap-3">
+                {repBreakdown.map((item, i) => (
+                  <div key={item.label} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-text-muted">{item.label}</span>
+                        <span className="text-xs font-mono font-bold text-text">
+                          {DEMO ? <CountUp end={item.value} delay={0.5 + i * 0.2} /> : item.value}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        {DEMO ? (
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{ backgroundColor: item.color }}
+                            initial={{ width: "0%" }}
+                            animate={{ width: `${item.value}%` }}
+                            transition={{
+                              duration: 1.5,
+                              delay: 0.5 + i * 0.2,
+                              ease: [0.25, 0.46, 0.45, 0.94],
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${item.value}%`, backgroundColor: item.color }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <p className="text-xs text-text-muted mt-4 leading-relaxed max-w-lg">
+                Reputation score is calculated from Moltbook activity, post engagement from other agents,
+                domain expertise depth, and verified work output metrics.
+              </p>
             </div>
-            <p className="text-xs text-text-muted mt-4 leading-relaxed max-w-lg">
-              Reputation score is calculated from Moltbook activity, post engagement from other agents,
-              domain expertise depth, and verified work output metrics.
-            </p>
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* Engagement Stats */}
       <div className="grid grid-cols-4 gap-4">
-        {engagementStats.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="group bg-card border border-border rounded-2xl p-5 transition-colors hover:border-accent/20">
+        {engagementStats.map(({ label, value, icon: Icon }, i) => (
+          <Card key={label} index={i + 2} className="group bg-card border border-border rounded-2xl p-5 transition-colors hover:border-accent/20">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-mono text-text-muted uppercase tracking-wider">{label}</p>
               <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center transition-colors group-hover:bg-accent/20">
                 <Icon size={15} className="text-accent" />
               </div>
             </div>
-            <p className="text-3xl font-bold font-mono text-text mt-3">{value}</p>
-          </div>
+            <p className="text-3xl font-bold font-mono text-text mt-3">
+              {DEMO ? <CountUp end={value} delay={0.5 + i * 0.15} /> : value}
+            </p>
+          </Card>
         ))}
       </div>
 
       {/* Posts Feed + Knowledge Network */}
       <div className="grid grid-cols-3 gap-4">
         {/* Recent Posts */}
-        <div className="col-span-2 bg-card border border-border rounded-2xl p-6">
+        <Section index={6} className="col-span-2 bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-text">Recent Moltbook Posts</h2>
             <span className="text-xs font-mono text-text-muted">{posts.length} posts shown</span>
@@ -263,7 +325,7 @@ export default function MoltbookPage() {
           <div className="space-y-3">
             {posts.map((post, i) => {
               const color = getSubmoltColor(post.submolt);
-              return (
+              const postContent = (
                 <div key={i} className="group p-4 rounded-xl bg-white/[0.015] hover:bg-white/[0.03] transition-colors border border-transparent hover:border-border">
                   <div className="flex items-center gap-2 mb-2">
                     <span
@@ -278,7 +340,7 @@ export default function MoltbookPage() {
                   <div className="flex items-center gap-4 mt-3">
                     <div className="flex items-center gap-1.5 text-text-muted">
                       <ThumbsUp size={12} />
-                      <span className="text-xs font-mono">{post.upvotes}</span>
+                      {DEMO ? <AnimatedUpvotes base={post.upvotes} /> : <span className="text-xs font-mono">{post.upvotes}</span>}
                     </div>
                     <div className="flex items-center gap-1.5 text-text-muted">
                       <MessageCircle size={12} />
@@ -287,17 +349,35 @@ export default function MoltbookPage() {
                   </div>
                 </div>
               );
+
+              if (DEMO) {
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.5,
+                      delay: 1.0 + i * 0.3,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
+                  >
+                    {postContent}
+                  </motion.div>
+                );
+              }
+              return postContent;
             })}
             {posts.length === 0 && (
               <p className="text-xs text-text-muted py-4 text-center">No posts yet</p>
             )}
           </div>
-        </div>
+        </Section>
 
         {/* Right column */}
         <div className="space-y-4">
           {/* Knowledge Network */}
-          <div className="bg-card border border-border rounded-2xl p-6">
+          <Section index={7} className="bg-card border border-border rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Brain size={16} className="text-secondary" />
               <h2 className="text-sm font-semibold text-text">Knowledge Network</h2>
@@ -306,25 +386,45 @@ export default function MoltbookPage() {
               Insights gained from the Moltbook agent community.
             </p>
             <div className="space-y-3">
-              {insights.map((item, i) => (
-                <div key={i} className="p-3 rounded-xl bg-white/[0.02] border border-border">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Lightbulb size={11} className="text-secondary flex-shrink-0" />
-                    <span className="text-[11px] font-mono text-secondary truncate">{item.source}</span>
-                    <span className="text-[10px] font-mono text-text-muted">in {item.submolt}</span>
+              {insights.map((item, i) => {
+                const insightContent = (
+                  <div key={i} className="p-3 rounded-xl bg-white/[0.02] border border-border">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Lightbulb size={11} className="text-secondary flex-shrink-0" />
+                      <span className="text-[11px] font-mono text-secondary truncate">{item.source}</span>
+                      <span className="text-[10px] font-mono text-text-muted">in {item.submolt}</span>
+                    </div>
+                    <p className="text-xs text-text leading-relaxed">{item.insight}</p>
+                    <p className="text-[10px] font-mono text-text-muted mt-1.5">{timeAgo(item.time)}</p>
                   </div>
-                  <p className="text-xs text-text leading-relaxed">{item.insight}</p>
-                  <p className="text-[10px] font-mono text-text-muted mt-1.5">{timeAgo(item.time)}</p>
-                </div>
-              ))}
+                );
+
+                if (DEMO) {
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.4,
+                        delay: 1.5 + i * 0.25,
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                      }}
+                    >
+                      {insightContent}
+                    </motion.div>
+                  );
+                }
+                return insightContent;
+              })}
               {insights.length === 0 && (
                 <p className="text-xs text-text-muted py-4 text-center">No insights yet</p>
               )}
             </div>
-          </div>
+          </Section>
 
           {/* Public Profile Card */}
-          <div className="bg-card border border-border rounded-2xl p-6">
+          <Section index={8} className="bg-card border border-border rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles size={16} className="text-accent" />
               <h2 className="text-sm font-semibold text-text">Public Profile</h2>
@@ -343,12 +443,14 @@ export default function MoltbookPage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: "Score", val: String(reputation.overall) },
-                  { label: "Posts", val: String(stats.totalPosts) },
-                  { label: "Upvotes", val: String(stats.totalUpvotes) },
+                  { label: "Score", val: reputation.overall },
+                  { label: "Posts", val: stats.totalPosts },
+                  { label: "Upvotes", val: stats.totalUpvotes },
                 ].map((s) => (
                   <div key={s.label} className="text-center py-1.5 rounded-lg bg-white/[0.03]">
-                    <p className="text-xs font-bold font-mono text-text">{s.val}</p>
+                    <p className="text-xs font-bold font-mono text-text">
+                      {DEMO ? <CountUp end={s.val} delay={1.8} /> : s.val}
+                    </p>
                     <p className="text-[9px] font-mono text-text-muted uppercase tracking-wider">{s.label}</p>
                   </div>
                 ))}
@@ -386,7 +488,7 @@ export default function MoltbookPage() {
             <p className="text-[11px] text-text-muted mt-2.5 leading-relaxed">
               Share this link with prospects to show your agent&apos;s verified track record on Moltbook.
             </p>
-          </div>
+          </Section>
         </div>
       </div>
     </div>

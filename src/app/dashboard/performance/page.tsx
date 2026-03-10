@@ -27,6 +27,11 @@ import {
 } from "recharts";
 import { useAgentStats } from "@/lib/agent-data/hooks";
 import { DemoBanner } from "@/components/demo-banner";
+import { isDemoMode } from "@/lib/demo-mode";
+import { MotionCard, MotionSection, CountUp } from "@/components/demo";
+import { DEMO_OVERVIEW_STATS } from "@/components/demo/demo-data";
+
+const DEMO = isDemoMode();
 
 function ChartTooltip({
   active,
@@ -80,9 +85,10 @@ const axisStyle = {
 };
 
 export default function PerformancePage() {
-  const { data, loading } = useAgentStats();
+  const { data: realData, loading } = useAgentStats();
+  const data = DEMO ? DEMO_OVERVIEW_STATS : realData;
 
-  if (loading && !data) {
+  if (!DEMO && loading && !data) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="text-accent animate-spin" />
@@ -112,8 +118,6 @@ export default function PerformancePage() {
     };
   });
 
-  // Messages by channel — derive from task breakdown for demo, or just show tasks
-  // For real data, we don't have per-channel breakdowns yet, so use task breakdown as the bar chart
   const channelData = taskBreakdown.map((t) => ({
     channel: t.label,
     messages: t.value,
@@ -153,29 +157,34 @@ export default function PerformancePage() {
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
+  const Section = DEMO ? MotionSection : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+  const Card = DEMO ? MotionCard : ({ children, className }: { children: React.ReactNode; index?: number; className?: string }) => <div className={className}>{children}</div>;
+
   return (
     <div className="space-y-6">
-      {isDemo && <DemoBanner />}
+      {!DEMO && isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text">Performance</h1>
-          <p className="text-sm text-text-muted mt-1">
-            30-day analytics for {identity.agentName} — all channels combined.
-          </p>
+      <Section index={0}>
+        <div className="flex items-end justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text">Performance</h1>
+            <p className="text-sm text-text-muted mt-1">
+              30-day analytics for {identity.agentName} — all channels combined.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg">
+            <Calendar size={14} className="text-text-muted" />
+            <span className="text-xs font-mono text-text-muted">
+              {formatRange(rangeStart)} — {formatRange(rangeEnd)}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg">
-          <Calendar size={14} className="text-text-muted" />
-          <span className="text-xs font-mono text-text-muted">
-            {formatRange(rangeStart)} — {formatRange(rangeEnd)}
-          </span>
-        </div>
-      </div>
+      </Section>
 
       {/* Top row: Line chart + Bar chart */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-card border border-border rounded-2xl p-6">
+        <Section index={1} className="col-span-2 bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-sm font-semibold text-text">Messages Per Day</h2>
@@ -195,17 +204,33 @@ export default function PerformancePage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyMessages} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="lineGlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ff6b35" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#ff6b35" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1a1a2e" vertical={false} />
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={axisStyle} dy={8} interval={4} />
                 <YAxis axisLine={false} tickLine={false} tick={axisStyle} />
                 <Tooltip content={<ChartTooltip suffix=" msgs" />} cursor={{ stroke: "#ff6b35", strokeOpacity: 0.15 }} />
-                <Line type="monotone" dataKey="messages" stroke="#ff6b35" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#ff6b35", stroke: "#12121e", strokeWidth: 2 }} />
+                <Line
+                  type="monotone"
+                  dataKey="messages"
+                  stroke="#ff6b35"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#ff6b35", stroke: "#12121e", strokeWidth: 2 }}
+                  isAnimationActive={DEMO}
+                  animationDuration={2000}
+                  animationEasing="ease-out"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Section>
 
-        <div className="bg-card border border-border rounded-2xl p-6">
+        <Section index={2} className="bg-card border border-border rounded-2xl p-6">
           <div className="mb-6">
             <h2 className="text-sm font-semibold text-text">Task Breakdown</h2>
             <p className="text-xs text-text-muted mt-0.5 capitalize">{identity.vertical.replace("-", " ")}</p>
@@ -217,7 +242,13 @@ export default function PerformancePage() {
                 <XAxis dataKey="channel" axisLine={false} tickLine={false} tick={{ ...axisStyle, fontSize: 8 }} dy={8} />
                 <YAxis axisLine={false} tickLine={false} tick={axisStyle} />
                 <Tooltip content={<BarTooltip />} cursor={false} />
-                <Bar dataKey="messages" radius={[6, 6, 0, 0]}>
+                <Bar
+                  dataKey="messages"
+                  radius={[6, 6, 0, 0]}
+                  isAnimationActive={DEMO}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
+                >
                   {channelData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} fillOpacity={0.8} />
                   ))}
@@ -225,12 +256,12 @@ export default function PerformancePage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Section>
       </div>
 
       {/* Bottom row: Area chart + Donut chart */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-card border border-border rounded-2xl p-6">
+        <Section index={3} className="col-span-2 bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-sm font-semibold text-text">Avg Response Time</h2>
@@ -260,13 +291,24 @@ export default function PerformancePage() {
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={axisStyle} dy={8} interval={4} />
                 <YAxis axisLine={false} tickLine={false} tick={axisStyle} domain={[0, "auto"]} />
                 <Tooltip content={<ChartTooltip suffix=" min" />} cursor={{ stroke: "#f7c948", strokeOpacity: 0.15 }} />
-                <Area type="monotone" dataKey="avg" stroke="#f7c948" strokeWidth={2} fill="url(#rtGradient)" dot={false} activeDot={{ r: 4, fill: "#f7c948", stroke: "#12121e", strokeWidth: 2 }} />
+                <Area
+                  type="monotone"
+                  dataKey="avg"
+                  stroke="#f7c948"
+                  strokeWidth={2}
+                  fill="url(#rtGradient)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#f7c948", stroke: "#12121e", strokeWidth: 2 }}
+                  isAnimationActive={DEMO}
+                  animationDuration={2000}
+                  animationEasing="ease-out"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Section>
 
-        <div className="bg-card border border-border rounded-2xl p-6">
+        <Section index={4} className="bg-card border border-border rounded-2xl p-6">
           <div className="mb-4">
             <h2 className="text-sm font-semibold text-text">Task Distribution</h2>
             <p className="text-xs text-text-muted mt-0.5">All time</p>
@@ -283,6 +325,9 @@ export default function PerformancePage() {
                   paddingAngle={3}
                   dataKey="value"
                   stroke="none"
+                  isAnimationActive={DEMO}
+                  animationDuration={1500}
+                  animationEasing="ease-out"
                 >
                   {taskBreakdown.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
@@ -315,18 +360,20 @@ export default function PerformancePage() {
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: task.color }} />
                   <span className="text-xs text-text-muted">{task.label}</span>
                 </div>
-                <span className="text-xs font-mono text-text">{task.value}</span>
+                <span className="text-xs font-mono text-text">
+                  {DEMO ? <CountUp end={task.value} delay={1} /> : task.value}
+                </span>
               </div>
             ))}
           </div>
-        </div>
+        </Section>
       </div>
 
       {/* Monthly Summary */}
-      <div className="bg-card border border-border rounded-2xl p-6">
+      <Section index={5} className="bg-card border border-border rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-text mb-4">Monthly Summary</h2>
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white/[0.02] rounded-xl p-4">
+          <Card index={6} className="bg-white/[0.02] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
                 <MessageSquare size={15} className="text-accent" />
@@ -335,10 +382,12 @@ export default function PerformancePage() {
                 Total Messages
               </p>
             </div>
-            <p className="text-2xl font-bold font-mono text-text">{totalMsgs}</p>
-          </div>
+            <p className="text-2xl font-bold font-mono text-text">
+              {DEMO ? <CountUp end={totalMsgs} delay={1.2} /> : totalMsgs}
+            </p>
+          </Card>
 
-          <div className="bg-white/[0.02] rounded-xl p-4">
+          <Card index={7} className="bg-white/[0.02] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
                 <Zap size={15} className="text-secondary" />
@@ -350,9 +399,9 @@ export default function PerformancePage() {
             <p className="text-2xl font-bold font-mono text-text">
               {(avgResponseTimeSec / 60).toFixed(1)}m
             </p>
-          </div>
+          </Card>
 
-          <div className="bg-white/[0.02] rounded-xl p-4">
+          <Card index={8} className="bg-white/[0.02] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                 <Calendar size={15} className="text-emerald-400" />
@@ -362,9 +411,9 @@ export default function PerformancePage() {
               </p>
             </div>
             <p className="text-2xl font-bold font-mono text-text">{busiestDay}</p>
-          </div>
+          </Card>
 
-          <div className="bg-white/[0.02] rounded-xl p-4">
+          <Card index={9} className="bg-white/[0.02] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <Trophy size={15} className="text-blue-400" />
@@ -375,11 +424,11 @@ export default function PerformancePage() {
             </div>
             <p className="text-2xl font-bold font-mono text-text">{topTask?.label?.split(" ")[0] ?? "—"}</p>
             <p className="text-xs font-mono text-text-muted mt-1">
-              {topTask?.value ?? 0} — {taskTotal > 0 ? Math.round(((topTask?.value ?? 0) / taskTotal) * 100) : 0}% of all tasks
+              {DEMO ? <CountUp end={topTask?.value ?? 0} delay={1.5} /> : (topTask?.value ?? 0)} — {taskTotal > 0 ? Math.round(((topTask?.value ?? 0) / taskTotal) * 100) : 0}% of all tasks
             </p>
-          </div>
+          </Card>
         </div>
-      </div>
+      </Section>
     </div>
   );
 }

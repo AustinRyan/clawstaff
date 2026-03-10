@@ -292,7 +292,8 @@ success "TestMaya registered with Gateway"
 python3 <<'PYEOF'
 import json
 
-config_path = "/Users/austinryan/.openclaw/openclaw.json"
+import os
+config_path = os.path.expanduser("~/.openclaw/openclaw.json")
 with open(config_path, "r") as f:
     config = json.load(f)
 

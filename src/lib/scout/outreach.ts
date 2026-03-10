@@ -2,7 +2,7 @@
 // Scout Outreach & Follow-Up System
 //
 // Pipeline: research prospect → compose message → schedule send →
-//           follow up on cadence → handle responses → report to Austin.
+//           follow up on cadence → handle responses → report to operator.
 // Channel sending is mocked (interface-ready for GOG/Agent Browser).
 // ─────────────────────────────────────────────
 
@@ -90,11 +90,11 @@ export interface CategorizedResponse {
   category: ResponseCategory;
   confidence: number; // 0-1
   suggestedReply: string | null;
-  requiresAustinAlert: boolean;
+  requiresOperatorAlert: boolean;
 }
 
 export interface WhatsAppAlert {
-  recipientId: string; // Austin's WhatsApp
+  recipientId: string; // operator's WhatsApp
   message: string;
   sentAt: string;
   alertType: "hot_lead" | "daily_report" | "opt_out" | "issue";
@@ -410,7 +410,7 @@ export class OutreachComposer {
     const solution = VERTICAL_OUTCOME_LINES[dossier.vertical];
     const proof = this.buildProof(dossier.vertical);
     const cta = "Free 2-week trial if you want to see it in action — want to give it a try?";
-    const signoff = "— Austin, ClawStaff";
+    const signoff = "— ClawStaff";
 
     const bodyParts = [greeting, painHook, solution, proof, cta, signoff];
     const isEmail = dossier.bestOutreachChannel === "email";
@@ -585,7 +585,7 @@ export class OutreachComposer {
     const outcome = VERTICAL_OUTCOME_LINES[dossier.vertical];
     const moltbook = getMoltbookProfile(dossier.vertical);
     const moltbookLine = moltbook ? ` You can see our agent in action here: ${moltbook.url}` : "";
-    return `Thanks for getting back to me, ${name}! In short: ${outcome.replace("I run a service that gives ", "you'd get ")} It works through WhatsApp — no software to learn, no setup on your end. Austin, our founder, can walk you through exactly how it would work for ${dossier.businessName}. He's available this week for a quick 15-minute call — what times work for you?${moltbookLine} We also offer a free 2-week trial so you can see it working before committing.`;
+    return `Thanks for getting back to me, ${name}! In short: ${outcome.replace("I run a service that gives ", "you'd get ")} It works through WhatsApp — no software to learn, no setup on your end. Our team can walk you through exactly how it would work for ${dossier.businessName}. We're available this week for a quick 15-minute call — what times work for you?${moltbookLine} We also offer a free trial so you can see it working before committing.`;
   }
 
   private composeNotInterestedReply(dossier: ProspectDossier): string {
@@ -596,13 +596,13 @@ export class OutreachComposer {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private composeQuestionReply(dossier: ProspectDossier, question: string): string {
     const name = dossier.ownerName ? dossier.ownerName.split(" ")[0] : "there";
-    return `Great question, ${name}. The short answer: you'd get a dedicated AI assistant that handles ${this.getVerticalTasks(dossier.vertical)} for ${dossier.businessName} — available 24/7 through WhatsApp. It's fully managed by our team, so there's nothing for you to set up or maintain. Austin, our founder, can give you a much better walkthrough than I can over text. Would a quick 10-minute call this week work? He can answer all your questions and show you exactly how it would work for your business.`;
+    return `Great question, ${name}. The short answer: you'd get a dedicated AI assistant that handles ${this.getVerticalTasks(dossier.vertical)} for ${dossier.businessName} — available 24/7 through WhatsApp. It's fully managed, so there's nothing for you to set up or maintain. Our team can give you a much better walkthrough than I can over text. Would a quick 10-minute call this week work? We can answer all your questions and show you exactly how it would work for your business.`;
   }
 
   private composePricingReply(dossier: ProspectDossier): string {
     const name = dossier.ownerName ? dossier.ownerName.split(" ")[0] : "there";
     const anchor = this.getPriceAnchor(dossier.vertical);
-    return `Great question, ${name} — happy to break it down. Most businesses like ${dossier.businessName} start with our Pro plan at $499/mo — that gets you a dedicated AI agent on up to 3 channels with the full skill stack. We also have a Starter plan at $299/mo for one channel, and Enterprise at $799/mo for multi-location businesses. ${anchor} We offer a free 2-week trial so you can see the value before committing. Austin, our founder, can walk you through exactly what your agent would do — happy to set up a quick 15-minute call?`;
+    return `Great question, ${name} — happy to break it down. Pricing depends on the scope: number of channels, skill stack, and complexity of what you need. ${anchor} We offer a free trial so you can see the value before committing. Our team can walk you through exactly what your agent would do for ${dossier.businessName} — happy to set up a quick 15-minute call?`;
   }
 
   private composeUnsubscribeReply(dossier: ProspectDossier): string {
@@ -709,7 +709,7 @@ export class OutreachScheduler {
         }
         case "contact_form": {
           const formUrl = prospect.business.contactFormUrl ?? "";
-          await this.sender.submitContactForm(formUrl, msg.body, "austin@clawstaff.ai");
+          await this.sender.submitContactForm(formUrl, msg.body, process.env.SCOUT_REPLY_EMAIL ?? "hello@example.com");
           break;
         }
       }
@@ -906,7 +906,7 @@ export class ResponseHandler {
         category: "unsubscribe",
         confidence: 0.99,
         suggestedReply: null,
-        requiresAustinAlert: false,
+        requiresOperatorAlert: false,
       };
     }
 
@@ -916,7 +916,7 @@ export class ResponseHandler {
         category: "out_of_office",
         confidence: 0.95,
         suggestedReply: null,
-        requiresAustinAlert: false,
+        requiresOperatorAlert: false,
       };
     }
 
@@ -926,7 +926,7 @@ export class ResponseHandler {
         category: "not_interested",
         confidence: 0.9,
         suggestedReply: null,
-        requiresAustinAlert: false,
+        requiresOperatorAlert: false,
       };
     }
 
@@ -936,7 +936,7 @@ export class ResponseHandler {
         category: "pricing_question",
         confidence: 0.9,
         suggestedReply: null,
-        requiresAustinAlert: true,
+        requiresOperatorAlert: true,
       };
     }
 
@@ -946,7 +946,7 @@ export class ResponseHandler {
         category: "interested",
         confidence: 0.85,
         suggestedReply: null,
-        requiresAustinAlert: true,
+        requiresOperatorAlert: true,
       };
     }
 
@@ -956,7 +956,7 @@ export class ResponseHandler {
       category: "question",
       confidence: 0.6,
       suggestedReply: null,
-      requiresAustinAlert: true,
+      requiresOperatorAlert: true,
     };
   }
 
@@ -994,16 +994,16 @@ export class ResponseHandler {
     // Compose reply
     const reply = this.composer.composeResponse(dossier, categorized);
 
-    // Send WhatsApp alert to Austin if needed
+    // Send WhatsApp alert to operator if needed
     let alert: WhatsAppAlert | null = null;
-    if (categorized.requiresAustinAlert) {
-      alert = await this.alertAustin(categorized, dossier, prospect);
+    if (categorized.requiresOperatorAlert) {
+      alert = await this.alertOperator(categorized, dossier, prospect);
     }
 
     return { categorized, reply, alert };
   }
 
-  private async alertAustin(
+  private async alertOperator(
     categorized: CategorizedResponse,
     dossier: ProspectDossier,
     prospect: StoredProspect | null

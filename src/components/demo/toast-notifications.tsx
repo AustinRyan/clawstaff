@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Toast {
@@ -25,7 +25,7 @@ const TOAST_MESSAGES = [
 
 export function ToastNotifications() {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const counterRef = { current: 0 };
+  const counterRef = useRef(0);
 
   const addToast = useCallback(() => {
     const idx = counterRef.current % TOAST_MESSAGES.length;

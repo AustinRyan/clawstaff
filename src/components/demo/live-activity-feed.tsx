@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Star, ShoppingCart, Calendar, MessageSquare, UserPlus } from "lucide-react";
 
@@ -114,7 +114,7 @@ const ACTIVITY_POOL: Omit<ActivityEntry, "id" | "time">[] = [
 
 export function LiveActivityFeed() {
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
-  const counterRef = { current: 0 };
+  const counterRef = useRef(0);
 
   const addEntry = useCallback(() => {
     const idx = counterRef.current % ACTIVITY_POOL.length;
